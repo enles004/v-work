@@ -24,6 +24,34 @@ Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng t
 
 ## Cài đặt
 
+### Qua npx (sau khi publish)
+
+```bash
+npx -y vwork-mcp login     # đăng nhập một lần
+npx -y vwork-mcp status
+```
+
+Config MCP client:
+
+```json
+{
+  "mcpServers": {
+    "vwork": {
+      "command": "npx",
+      "args": ["-y", "vwork-mcp"]
+    }
+  }
+}
+```
+
+Nếu chưa publish lên npm, có thể chạy trực tiếp từ GitHub:
+
+```bash
+npx -y github:enles004/vwork-mcp login
+```
+
+### Từ source
+
 ```bash
 npm install
 npm run build

@@ -1,7 +1,7 @@
 {
   "name": "vwork-mcp",
   "version": "0.1.0",
-  "description": "MCP server cho VNFITE Work (tiến độ dự án, ticket, thông báo)",
+  "description": "MCP server cho VNFITE Work — tiến độ dự án, ticket, thông báo (stdio)",
   "type": "module",
   "bin": {
     "vwork-mcp": "dist/cli.js"
@@ -12,7 +12,8 @@
     "start": "node dist/cli.js",
     "test": "vitest run",
     "inspect": "npx @modelcontextprotocol/inspector node dist/cli.js",
-    "auth:check": "tsx scripts/check.ts"
+    "auth:check": "tsx scripts/check.ts",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20"
@@ -26,5 +27,21 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.0"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "vnfite",
+    "vwork",
+    "project-tracker"
+  ],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }
