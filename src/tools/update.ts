@@ -1,12 +1,9 @@
 import type { TrackerDoc } from "./tracker.js";
 
+// API chỉ cho sửa các field này; các field còn lại (code, feature, owner, due, prio…) là bất biến.
 export interface TaskChanges {
   status?: string;
-  owner?: string;
-  due?: string;
   note?: string;
-  prio?: string;
-  release?: string;
 }
 
 export function findDoc(docs: TrackerDoc[], reference: string): TrackerDoc | undefined {
@@ -14,7 +11,8 @@ export function findDoc(docs: TrackerDoc[], reference: string): TrackerDoc | und
   if (ref.includes("/")) {
     const [collection, docId] = ref.split("/", 2);
     return docs.find(
-      (doc) => doc.collection === collection && (doc.doc_id === docId || docCode(doc) === docId),
+      (doc) =>
+        doc.collection === collection && (doc.doc_id === docId || docCode(doc) === docId),
     );
   }
   const lower = ref.toLowerCase();
@@ -23,21 +21,16 @@ export function findDoc(docs: TrackerDoc[], reference: string): TrackerDoc | und
 
 function docCode(doc: TrackerDoc): string {
   const data = (doc.data ?? {}) as Record<string, unknown>;
-  const code = data.code ?? doc.doc_id;
-  return String(code ?? "");
+  return String(data.code ?? doc.doc_id ?? "");
 }
 
-export function mergeTaskData(
-  current: Record<string, unknown>,
-  changes: TaskChanges,
-): Record<string, unknown> {
-  const merged = { ...current };
-  for (const [key, value] of Object.entries(changes)) {
-    if (value !== undefined && value !== "") merged[key] = value;
-  }
-  return merged;
+export function buildChanges(input: TaskChanges): TaskChanges {
+  const changes: TaskChanges = {};
+  if (input.status?.trim()) changes.status = input.status.trim();
+  if (input.note !== undefined) changes.note = input.note;
+  return changes;
 }
 
 export function hasChanges(changes: TaskChanges): boolean {
-  return Object.values(changes).some((value) => value !== undefined && value !== "");
+  return Object.keys(changes).length > 0;
 }

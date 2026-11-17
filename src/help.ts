@@ -16,7 +16,7 @@ LỆNH
   tickets           Danh sách ticket (--status, --limit)
   ticket <id>       Chi tiết ticket
   notifications     Thông báo (--limit)
-  update <code>     Cập nhật task: --status --owner --due --prio --release --note
+  update <code>     Cập nhật task: --status TEXT --note TEXT
   api <METHOD> <PATH>   Gọi API bất kỳ: --query "k=v,k2=v2" --body '{"a":1}'
 
   serve             Chạy MCP server qua stdio (Claude/Cursor tự gọi)

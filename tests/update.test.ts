@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { findDoc, hasChanges, mergeTaskData } from "../src/tools/update.js";
+import { buildChanges, findDoc, hasChanges } from "../src/tools/update.js";
 
 const docs = [
   { collection: "tasks", doc_id: "E01", data: { code: "E01", status: "Chưa làm", owner: "Phước" } },
@@ -21,18 +21,14 @@ describe("findDoc", () => {
   });
 });
 
-describe("mergeTaskData", () => {
-  it("chỉ ghi đè field được truyền", () => {
-    const merged = mergeTaskData(
-      { status: "Chưa làm", owner: "Phước", note: "cũ" },
-      { status: "Đang làm", note: undefined },
-    );
-    expect(merged).toEqual({ status: "Đang làm", owner: "Phước", note: "cũ" });
+describe("buildChanges", () => {
+  it("chỉ gửi field được truyền", () => {
+    expect(buildChanges({ status: "Đang làm" })).toEqual({ status: "Đang làm" });
+    expect(buildChanges({ note: "" })).toEqual({ note: "" });
   });
 
-  it("hasChanges phát hiện rỗng", () => {
-    expect(hasChanges({})).toBe(false);
-    expect(hasChanges({ status: "" })).toBe(false);
-    expect(hasChanges({ status: "Đang làm" })).toBe(true);
+  it("bỏ status rỗng", () => {
+    expect(hasChanges(buildChanges({ status: "   " }))).toBe(false);
+    expect(hasChanges(buildChanges({ status: "Đang làm" }))).toBe(true);
   });
 });

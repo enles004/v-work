@@ -36,15 +36,15 @@ Xem chi tiết một ticket theo id.`,
   notifications: `v-work notifications [--limit N] [--json]
 
 Số thông báo chưa đọc và danh sách thông báo mới nhất.`,
-  update: `v-work update <code|collection/docId> [--status TEXT] [--owner NAME]
-              [--due YYYY-MM-DD] [--prio P0] [--release R1] [--note TEXT] [--json]
+  update: `v-work update <code|collection/docId> [--status TEXT] [--note TEXT] [--json]
 
-Cập nhật một task/doc trong bảng tiến độ. Chỉ gửi các field bạn truyền.
+Cập nhật một task trong bảng tiến độ. API chỉ cho sửa: status, note
+(các field code/feature/owner/due/prio/release là bất biến).
 Cần bật ghi: VWORK_ALLOW_WRITE=true.
 
 Ví dụ:
-  VWORK_ALLOW_WRITE=true v-work update A01 --status "Đang làm" --owner Phước
-  v-work update tasks/E02 --due 2026-12-01 --note "đang chờ review"`,
+  VWORK_ALLOW_WRITE=true v-work update A01 --status "Đang làm"
+  VWORK_ALLOW_WRITE=true v-work update tasks/E02 --note "chờ review"`,
   api: `v-work api <METHOD> <PATH> [--query "k=v,k2=v2"] [--body '<json>'] [--json]
 
 Gọi API VWork bất kỳ (đã có auth). GET luôn được phép trong allowlist;

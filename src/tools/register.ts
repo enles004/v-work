@@ -7,7 +7,7 @@ import { VworkClient, VworkError } from "../client.js";
 import { unwrap } from "../format.js";
 import { assertAllowedPath } from "./api.js";
 import { extractIdentity, filterMyTasks } from "./mine.js";
-import { findDoc, hasChanges, mergeTaskData, type TaskChanges } from "./update.js";
+import { buildChanges, findDoc, hasChanges } from "./update.js";
 import {
   docCollection,
   docStatus,
@@ -176,20 +176,16 @@ export function registerTools(
       inputSchema: z.object({
         reference: z.string().describe("code (vd A01) hoặc collection/doc_id (vd tasks/E02)"),
         project: projectArg,
-        status: z.string().optional(),
-        owner: z.string().optional(),
-        due: z.string().optional().describe("YYYY-MM-DD"),
-        prio: z.string().optional(),
-        release: z.string().optional(),
-        note: z.string().optional(),
+        status: z.string().optional().describe("trạng thái mới, vd Đang làm"),
+        note: z.string().optional().describe("ghi chú"),
       }),
     },
-    async ({ reference, project, ...rest }) =>
+    async ({ reference, project, status, note }) =>
       guard(async () => {
         if (!config.allowWrite) {
           return fail("Đang ở chế độ chỉ đọc. Đặt VWORK_ALLOW_WRITE=true để cập nhật.");
         }
-        const changes: TaskChanges = rest;
+        const changes = buildChanges({ status, note });
         if (!hasChanges(changes)) return fail("không có field nào cần cập nhật");
 
         const docsPath = `/project-tracker/${project ?? config.project}/docs`;
@@ -198,16 +194,17 @@ export function registerTools(
         const doc = findDoc(docs, reference);
         if (!doc) return fail(`không tìm thấy task ${reference}`);
 
-        const merged = mergeTaskData((doc.data ?? {}) as Record<string, unknown>, changes);
         const saved = await client.request(
           "PATCH",
           `/project-tracker/${project ?? config.project}/docs/${doc.collection}/${doc.doc_id}`,
-          { body: merged },
+          { body: { data: changes } },
         );
         client.clearCache();
-        return ok(`✅ Đã cập nhật ${doc.collection}/${doc.doc_id}\n${formatDoc(
-          (unwrap(saved) as never) ?? { ...doc, data: merged },
-        )}`);
+        return ok(
+          `✅ Đã cập nhật ${doc.collection}/${doc.doc_id}\n${formatDoc(
+            (unwrap(saved) as never) ?? doc,
+          )}`,
+        );
       }),
   );
 

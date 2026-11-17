@@ -13,7 +13,7 @@ import {
 } from "../tools/tracker.js";
 import { assertKnownFlags, flagBool, flagNumber, flagString, parseFlags } from "./flags.js";
 import { helpFor } from "./help.js";
-import { findDoc, hasChanges, mergeTaskData, type TaskChanges } from "../tools/update.js";
+import { buildChanges, findDoc, hasChanges } from "../tools/update.js";
 
 function json(value: unknown): string {
   return JSON.stringify(value, null, 2);
@@ -46,7 +46,7 @@ const ALLOWED_FLAGS: Record<string, string[]> = {
   tickets: ["json", "help", "status", "limit"],
   ticket: ["json", "help"],
   notifications: ["json", "help", "limit"],
-  update: ["json", "help", "status", "owner", "due", "prio", "release", "note"],
+  update: ["json", "help", "status", "note"],
   api: ["json", "help", "query", "body"],
 };
 
@@ -179,14 +179,10 @@ export async function runCli(argv: string[]): Promise<void> {
       const reference = args.positional[0];
       if (!reference) throw new Error("dùng: v-work update <code|collection/docId> --status ...");
 
-      const changes: TaskChanges = {
+      const changes = buildChanges({
         status: flagString(args.flags, "status"),
-        owner: flagString(args.flags, "owner"),
-        due: flagString(args.flags, "due"),
-        prio: flagString(args.flags, "prio"),
-        release: flagString(args.flags, "release"),
         note: flagString(args.flags, "note"),
-      };
+      });
       if (!hasChanges(changes)) {
         throw new Error("chưa có thay đổi nào. Xem: v-work update --help");
       }
@@ -196,10 +192,8 @@ export async function runCli(argv: string[]): Promise<void> {
       const doc = findDoc(docs, reference);
       if (!doc) throw new Error(`không tìm thấy task ${reference}`);
 
-      const current = (doc.data ?? {}) as Record<string, unknown>;
-      const merged = mergeTaskData(current, changes);
       const path = `/project-tracker/${config.project}/docs/${doc.collection}/${doc.doc_id}`;
-      const saved = unwrap(await client.request("PATCH", path, { body: merged }));
+      const saved = unwrap(await client.request("PATCH", path, { body: { data: changes } }));
       client.clearCache();
 
       if (wantJson) {
@@ -207,7 +201,9 @@ export async function runCli(argv: string[]): Promise<void> {
         return;
       }
       console.log(`✅ Đã cập nhật ${doc.collection}/${doc.doc_id}`);
-      console.log(formatDoc((saved && typeof saved === "object" ? saved : { ...doc, data: merged }) as never));
+      console.log(
+        formatDoc((saved && typeof saved === "object" ? saved : doc) as never),
+      );
       return;
     }
 
