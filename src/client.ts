@@ -41,7 +41,7 @@ export class VworkClient {
     const upper = method.toUpperCase();
     if (upper !== "GET" && !this.config.allowWrite) {
       throw new VworkError(
-        "MCP đang ở chế độ chỉ đọc. Đặt VWORK_ALLOW_WRITE=true để bật thao tác ghi.",
+        "Đang ở chế độ chỉ đọc. Đặt VWORK_ALLOW_WRITE=true để bật thao tác ghi.",
         403,
       );
     }

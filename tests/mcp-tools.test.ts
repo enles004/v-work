@@ -31,8 +31,8 @@ function capture(): Registered[] {
 describe("đăng ký MCP tool", () => {
   const tools = capture();
 
-  it("đủ 10 tool, tên duy nhất và có tiền tố vwork_", () => {
-    expect(tools).toHaveLength(10);
+  it("đủ 11 tool, tên duy nhất và có tiền tố vwork_", () => {
+    expect(tools).toHaveLength(11);
     const names = tools.map((tool) => tool.name);
     expect(new Set(names).size).toBe(names.length);
     for (const name of names) expect(name).toMatch(/^vwork_[a-z_]+$/);
@@ -55,6 +55,7 @@ describe("đăng ký MCP tool", () => {
         "vwork_tracker_search",
         "vwork_tracker_summary",
         "vwork_tickets",
+        "vwork_update_task",
         "vwork_notifications",
         "vwork_api",
       ]),

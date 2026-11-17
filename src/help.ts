@@ -16,6 +16,7 @@ LỆNH
   tickets           Danh sách ticket (--status, --limit)
   ticket <id>       Chi tiết ticket
   notifications     Thông báo (--limit)
+  update <code>     Cập nhật task: --status --owner --due --prio --release --note
   api <METHOD> <PATH>   Gọi API bất kỳ: --query "k=v,k2=v2" --body '{"a":1}'
 
   serve             Chạy MCP server qua stdio (Claude/Cursor tự gọi)
@@ -28,6 +29,7 @@ VÍ DỤ
   npx -y v-work auth
   npx -y v-work tasks --mine --todo
   npx -y v-work summary
+  VWORK_ALLOW_WRITE=true npx -y v-work update A01 --status "Đang làm"
   npx -y v-work api GET /tickets --query "status=open,limit=3"
   npx -y v-work tasks --mine --json
 

@@ -4,7 +4,15 @@ export interface ParsedArgs {
   flags: Record<string, string | boolean>;
 }
 
-const BOOLEAN_FLAGS = new Set(["json", "mine", "overdue", "todo", "unread", "all"]);
+const BOOLEAN_FLAGS = new Set([
+  "json",
+  "mine",
+  "overdue",
+  "todo",
+  "unread",
+  "all",
+  "help",
+]);
 
 export function parseFlags(argv: string[]): ParsedArgs {
   const [command = "", ...rest] = argv;
@@ -48,4 +56,16 @@ export function flagNumber(flags: ParsedArgs["flags"], key: string, fallback: nu
 
 export function flagBool(flags: ParsedArgs["flags"], key: string): boolean {
   return flags[key] === true || flags[key] === "true";
+}
+
+export function assertKnownFlags(
+  flags: Record<string, string | boolean>,
+  allowed: string[],
+  command: string,
+): void {
+  for (const key of Object.keys(flags)) {
+    if (!allowed.includes(key)) {
+      throw new Error(`flag không hợp lệ: --${key}. Xem: v-work ${command} --help`);
+    }
+  }
 }

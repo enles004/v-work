@@ -16,6 +16,7 @@ export const CLI_COMMANDS = new Set([
   "tickets",
   "ticket",
   "notifications",
+  "update",
   "api",
 ]);
 

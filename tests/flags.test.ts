@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { flagBool, flagNumber, flagString, parseFlags } from "../src/cli/flags.js";
+import { assertKnownFlags, flagBool, flagNumber, flagString, parseFlags } from "../src/cli/flags.js";
 
 describe("parseFlags", () => {
   it("tách command, positional và flags", () => {
@@ -21,5 +21,16 @@ describe("parseFlags", () => {
     const args = parseFlags(["api", "GET", "/tickets", "--query", "status=open,limit=3"]);
     expect(args.positional).toEqual(["GET", "/tickets"]);
     expect(flagString(args.flags, "query")).toBe("status=open,limit=3");
+  });
+});
+
+
+describe("assertKnownFlags", () => {
+  it("chặn flag lạ kèm gợi ý help", () => {
+    expect(() => assertKnownFlags({ nope: true }, ["json"], "tasks")).toThrow(/--help/);
+  });
+
+  it("cho qua flag hợp lệ", () => {
+    expect(() => assertKnownFlags({ json: true }, ["json", "help"], "tasks")).not.toThrow();
   });
 });
