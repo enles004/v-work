@@ -83,3 +83,17 @@ describe("khớp tên chính xác", () => {
     expect(filterMyTasks(docs, identity).map((d) => d.doc_id)).toEqual(["a", "b"]);
   });
 });
+
+describe("username/email không khớp substring", () => {
+  it("username 'ann' không nhận owner 'joann'", () => {
+    const identity = { username: "ann" };
+    expect(filterMyTasks([{ doc_id: "x", data: { owner: "joann" } }], identity)).toHaveLength(0);
+  });
+
+  it("email không khớp email của người khác", () => {
+    const identity = { email: "ann@example.test" };
+    expect(
+      filterMyTasks([{ doc_id: "x", data: { owner: "joann@example.test" } }], identity),
+    ).toHaveLength(0);
+  });
+});

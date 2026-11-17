@@ -53,3 +53,10 @@ describe("auth flags", () => {
     });
   });
 });
+
+describe("auth --json", () => {
+  it("auth status --json hợp lệ", () => {
+    expect(parseCommand(["auth", "status", "--json"])).toEqual({ kind: "status" });
+    expect(parseCommand(["auth", "whoami", "--json"])).toEqual({ kind: "whoami" });
+  });
+});

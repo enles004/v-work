@@ -41,3 +41,9 @@ describe("normalizePath chống bypass", () => {
     expect(() => assertAllowedPath("/tickets/1", true, "PATCH")).not.toThrow();
   });
 });
+
+describe("double-encode", () => {
+  it("chặn %252e%252e", () => {
+    expect(() => assertAllowedPath("/tickets/%252e%252e/auth/login", true, "POST")).toThrow();
+  });
+});

@@ -27,7 +27,11 @@ export function parseCommand(argv: string[]): Command {
   if (first === "auth") {
     const rest = argv.slice(1);
     if (rest.some((token) => token === "--help" || token === "-h")) return { kind: "help" };
-    if (rest.length > 1 || (rest[0]?.startsWith("-") ?? false)) {
+    const positional = rest.filter((token) => !token.startsWith("-"));
+    const unknownFlags = rest.filter(
+      (token) => token.startsWith("-") && token !== "--json",
+    );
+    if (unknownFlags.length > 0 || positional.length > 1) {
       return { kind: "invalid", value: `auth ${rest.join(" ")}`.trim() };
     }
     switch (second) {

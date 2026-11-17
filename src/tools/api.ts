@@ -34,7 +34,12 @@ export function normalizePath(path: string): string {
   const url = new URL(path, "http://localhost");
   let decoded = url.pathname;
   try {
-    decoded = decodeURIComponent(url.pathname);
+    // Decode lặp để chặn cả %252e%252e (double-encode).
+    for (let depth = 0; depth < 4; depth += 1) {
+      const next = decodeURIComponent(decoded);
+      if (next === decoded) break;
+      decoded = next;
+    }
   } catch {
     throw new PathNotAllowedError(`đường dẫn mã hoá không hợp lệ: ${path}`);
   }

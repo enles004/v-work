@@ -106,3 +106,35 @@ describe("cache và lỗi body", () => {
     await expect(client.get("/tickets")).rejects.toThrow(/không phải JSON/);
   });
 });
+
+describe("write lỗi nhưng cache", () => {
+  it("cache bị xoá dù response ghi không parse được", async () => {
+    let n = 0;
+    const fetchImpl = vi.fn(async (url: string) => {
+      n += 1;
+      if (url.includes("/tickets") && n === 1) return jsonResponse({ data: { v: "old" } });
+      if (url.includes("/tickets/1")) return new Response("<html>ok</html>", { status: 200 });
+      return jsonResponse({ data: { v: "new" } });
+    });
+    const client = new VworkClient({ ...config, allowWrite: true }, fakeAuth() as never, fetchImpl as never);
+
+    await client.get("/tickets");
+    await expect(
+      client.request("PATCH", "/tickets/1", { body: { data: { status: "x" } } }),
+    ).rejects.toThrow();
+    await client.get("/tickets");
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it("giữ query nhúng trong path", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ data: [] }));
+    const client = new VworkClient(config, fakeAuth() as never, fetchImpl as never);
+
+    await client.get("/tickets?limit=1&status=open");
+
+    const url = String((fetchImpl.mock.calls[0] as unknown[])[0]);
+    expect(url).toContain("limit=1");
+    expect(url).toContain("status=open");
+  });
+});

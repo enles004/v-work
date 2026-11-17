@@ -146,7 +146,7 @@ Câu hỏi mẫu:
 ## Phát triển
 
 ```bash
-npm test        # 64 test, mock toàn bộ HTTP, không gọi mạng
+npm test        # 72 test, mock toàn bộ HTTP, không gọi mạng
 npm run build
 npm run dev     # tsx, dùng khi debug
 ```

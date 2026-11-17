@@ -94,7 +94,7 @@ export function filterMyTasks(
       // Tên phải khớp nguyên token ("Phước" không khớp "Phước Anh");
       // username/email thì so khớp chuỗi vì là định danh duy nhất.
       const byName = segments.some((segment) => nameAliases.includes(segment));
-      const byAccount = accountAliases.some((alias) => assigneeText.includes(alias));
+      const byAccount = segments.some((segment) => accountAliases.includes(segment));
       const byText = byName || byAccount;
       const byId = identity.id ? assigneeIds(doc).includes(identity.id) : false;
       if (!byText && !byId) return false;

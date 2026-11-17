@@ -50,10 +50,23 @@ export class VworkClient {
       throw new VworkError(`đường dẫn API không hợp lệ: ${path}`, 400);
     }
 
-    const url = this.buildUrl(normalizePath(path), options.query);
+    const queryMark = path.indexOf("?");
+    const rawPath = queryMark >= 0 ? path.slice(0, queryMark) : path;
+    const inlineQuery: Record<string, string> = {};
+    if (queryMark >= 0) {
+      new URLSearchParams(path.slice(queryMark + 1)).forEach((value, key) => {
+        inlineQuery[key] = value;
+      });
+    }
+    const url = this.buildUrl(normalizePath(rawPath), { ...inlineQuery, ...options.query });
     if (upper === "GET") {
       const cached = this.cache.get(url);
       if (cached && cached.expiresAt > Date.now()) return cached.value as T;
+    }
+
+    if (upper !== "GET") {
+      // Ghi có thể đã thành công dù response lỗi/không parse được: bỏ cache trước khi gửi.
+      this.cache.clear();
     }
 
     const result = await this.send<T>(upper, url, options);
