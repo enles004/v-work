@@ -56,3 +56,13 @@ describe("encode nhiều lớp", () => {
     expect(() => assertAllowedPath("/tickets/%252525252e%252525252e/permissions/roles", true, "GET")).toThrow();
   });
 });
+
+describe("path có query", () => {
+  it("allowlist chỉ kiểm pathname", () => {
+    expect(() => assertAllowedPath("/tickets?limit=1", false, "GET")).not.toThrow();
+  });
+
+  it("vẫn chặn traversal kèm query", () => {
+    expect(() => assertAllowedPath("/tickets/%2e%2e/auth/login?x=1", true, "POST")).toThrow();
+  });
+});

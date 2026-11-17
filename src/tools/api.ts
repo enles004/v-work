@@ -63,7 +63,10 @@ export function normalizePath(path: string): string {
 }
 
 export function assertAllowedPath(path: string, allowWrite: boolean, method: string): void {
-  const normalized = normalizePath(path);
+  // Query tách trước khi kiểm allowlist; invariant canonical chỉ áp cho pathname.
+  const queryMark = path.indexOf("?");
+  const pathname = queryMark >= 0 ? path.slice(0, queryMark) : path;
+  const normalized = normalizePath(pathname);
   if (normalized.startsWith("/auth/")) {
     throw new PathNotAllowedError("không được gọi API auth qua tool generic");
   }

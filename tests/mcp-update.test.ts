@@ -71,3 +71,14 @@ describe("vwork_update_task handler", () => {
     expect(client.request).not.toHaveBeenCalled();
   });
 });
+
+describe("vwork_api với query nhúng", () => {
+  it("chấp nhận path có ?query", async () => {
+    const { handlers, client } = captureHandlers(false);
+
+    const result = await handlers.get("vwork_api")!({ method: "GET", path: "/tickets?limit=1" });
+
+    expect(result.isError).toBeUndefined();
+    expect(client.request).toHaveBeenCalled();
+  });
+});

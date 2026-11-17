@@ -37,3 +37,15 @@ describe("v-work api", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
+
+describe("query nhúng trong api", () => {
+  it("không bị chặn và giữ query", async () => {
+    process.env.VWORK_TOKEN_FILE = await tokenFile();
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchImpl);
+
+    await runCli(["api", "GET", "/tickets?limit=1"]);
+
+    expect(String((fetchImpl.mock.calls[0] as unknown[])[0])).toContain("limit=1");
+  });
+});
