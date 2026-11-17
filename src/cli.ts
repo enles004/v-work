@@ -5,19 +5,12 @@ import { createInterface } from "node:readline/promises";
 import { AuthSession } from "./auth.js";
 import { VworkClient } from "./client.js";
 import { loadConfig } from "./config.js";
+import { parseCommand } from "./cli-args.js";
+import { runCli } from "./cli/commands.js";
+import { HELP, VERSION } from "./help.js";
 import { extractIdentity } from "./tools/mine.js";
 import { startServer } from "./server.js";
 
-const USAGE = `vwork-mcp — MCP server cho VNFITE Work
-
-Cách dùng:
-  vwork-mcp                    chạy MCP server qua stdio (mặc định)
-  vwork-mcp login              đăng nhập và lưu token vào ~/.config/vwork-mcp/tokens.json
-  vwork-mcp status             xem trạng thái token (không gọi mạng)
-  vwork-mcp logout             xoá token đã lưu
-  vwork-mcp whoami             đăng nhập nếu cần rồi in tài khoản hiện tại
-  vwork-mcp --help             hiện trợ giúp
-`;
 
 async function promptHidden(question: string): Promise<string> {
   if (!process.stdin.isTTY) {
@@ -88,11 +81,12 @@ async function commandStatus(): Promise<void> {
   const session = new AuthSession(config);
   const token = await session.loadTokens();
   if (!token) {
-    console.log(`Chưa đăng nhập. Chạy: vwork-mcp login`);
+    console.log("Chưa đăng nhập. Chạy: npx -y v-work auth");
     console.log(`Token file: ${config.tokenFile}`);
     return;
   }
-  console.log(`✅ Có token tại ${config.tokenFile}`);
+  console.log(`✅ Đã đăng nhập. Token: ${config.tokenFile}`);
+  console.log(`Base: ${config.baseUrl} · project: ${config.project}`);
 }
 
 async function commandLogout(): Promise<void> {
@@ -104,16 +98,14 @@ async function commandLogout(): Promise<void> {
 async function commandWhoami(): Promise<void> {
   const config = loadConfig();
   const client = new VworkClient(config, new AuthSession(config));
-  const me = await client.get("/permissions/me");
+  const me = await client.get("/user/getUserInfo");
   console.log(extractIdentity(me));
 }
 
 async function main(): Promise<void> {
-  const command = process.argv[2] ?? "serve";
-  switch (command) {
-    case "serve":
-      await startServer();
-      return;
+  const command = parseCommand(process.argv.slice(2));
+
+  switch (command.kind) {
     case "login":
       await commandLogin();
       return;
@@ -126,14 +118,28 @@ async function main(): Promise<void> {
     case "whoami":
       await commandWhoami();
       return;
-    case "--help":
-    case "-h":
     case "help":
-      process.stdout.write(USAGE);
+      process.stdout.write(HELP);
       return;
-    default:
-      process.stderr.write(`Lệnh không hợp lệ: ${command}\n\n${USAGE}`);
+    case "version":
+      process.stdout.write(`v-work ${VERSION}\n`);
+      return;
+    case "cli":
+      await runCli(process.argv.slice(2));
+      return;
+    case "invalid":
+      process.stderr.write(`Lệnh không hợp lệ: ${command.value}\n\n${HELP}`);
       process.exit(1);
+      return;
+    case "serve": {
+      // Chạy tay trong terminal thì in trạng thái; MCP client spawn qua pipe thì chạy server.
+      if (process.stdin.isTTY) {
+        await commandStatus();
+        process.stdout.write(`\n${HELP}`);
+        return;
+      }
+      await startServer();
+    }
   }
 }
 
