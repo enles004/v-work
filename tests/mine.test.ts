@@ -43,3 +43,26 @@ describe("filterMyTasks", () => {
     expect(filterMyTasks(docs, identity, { status: "doing" }).map((d) => d.doc_id)).toEqual(["d"]);
   });
 });
+
+describe("profile phẳng từ /user/getUserInfo", () => {
+  const profile = {
+    id: "acc-9",
+    username: "phuoclh",
+    full_name: "Lê Hữu Phước",
+    email: "",
+  };
+
+  it("lấy được tên, shortName, username", () => {
+    const identity = extractIdentity(profile);
+    expect(identity.name).toBe("Lê Hữu Phước");
+    expect(identity.shortName).toBe("Phước");
+    expect(identity.username).toBe("phuoclh");
+    expect(identity.email).toBeUndefined();
+  });
+
+  it("khớp task ghi owner bằng tên gọi", () => {
+    const identity = extractIdentity(profile);
+    const docs = [{ doc_id: "x", data: { owner: "Phước", status: "Chưa làm" } }];
+    expect(filterMyTasks(docs, identity)).toHaveLength(1);
+  });
+});

@@ -24,7 +24,17 @@ const ASSIGNEE_FIELDS = [
   "người phụ trách",
   "member",
 ];
-const TITLE_FIELDS = ["title", "name", "subject", "summary", "tenduan", "tentask", "tên"];
+const TITLE_FIELDS = [
+  "feature",
+  "title",
+  "name",
+  "subject",
+  "summary",
+  "text",
+  "tenduan",
+  "tentask",
+  "tên",
+];
 const DUE_FIELDS = [
   "dueDate",
   "due_date",
@@ -80,11 +90,15 @@ export function docAssignee(doc: TrackerDoc): string {
   return "chưa gán";
 }
 
+export function docCode(doc: TrackerDoc): string {
+  const value = nestedFieldOf(doc, ["code", "doc_id", "docId", "key", "id"]);
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
 export function docTitle(doc: TrackerDoc): string {
   const value = nestedFieldOf(doc, TITLE_FIELDS);
   if (typeof value === "string" && value.trim()) return value.trim();
-  const id = fieldOf(doc, ["doc_id", "docId", "id", "code", "key"]);
-  return String(id ?? "(không tên)");
+  return docCode(doc) || "(không tên)";
 }
 
 export function docCollection(doc: TrackerDoc): string {
@@ -164,7 +178,7 @@ export function summarizeDocs(docs: TrackerDoc[], now = new Date()): TrackerSumm
     byCollection[collection] = (byCollection[collection] ?? 0) + 1;
     const status = docStatus(doc);
     byStatus[status] = (byStatus[status] ?? 0) + 1;
-    for (const person of docAssignee(doc).split(/,\s*/)) {
+    for (const person of docAssignee(doc).split(/\s*[,+]\s*/)) {
       byAssignee[person] = (byAssignee[person] ?? 0) + 1;
     }
 
@@ -180,16 +194,34 @@ export function summarizeDocs(docs: TrackerDoc[], now = new Date()): TrackerSumm
   return { total: docs.length, byCollection, byStatus, byAssignee, overdue, dueSoon };
 }
 
+export function docPriority(doc: TrackerDoc): string {
+  const value = nestedFieldOf(doc, ["prio", "priority", "do_uutien"]);
+  return typeof value === "string" ? value : "";
+}
+
+export function docRelease(doc: TrackerDoc): string {
+  const value = nestedFieldOf(doc, ["release", "version", "sprint"]);
+  return typeof value === "string" ? value : "";
+}
+
+export function isBlocked(doc: TrackerDoc): boolean {
+  return nestedFieldOf(doc, ["blocked", "isBlocked"]) === true;
+}
+
 export function formatDoc(doc: TrackerDoc, now = new Date()): string {
   const due = docDue(doc);
   const progress = docProgress(doc);
+  const code = docCode(doc);
   const flags = [
+    docPriority(doc) || null,
+    docRelease(doc) || null,
     due ? `hạn ${due.toISOString().slice(0, 10)}` : null,
     progress === null ? null : `${progress}%`,
+    isBlocked(doc) ? "BLOCKED" : null,
     isOverdue(doc, now) ? "QUÁ HẠN" : null,
   ].filter(Boolean);
   return [
-    `[${docCollection(doc)}] ${docTitle(doc)}`,
+    `[${docCollection(doc)}${code ? `/${code}` : ""}] ${docTitle(doc)}`,
     `trạng thái: ${docStatus(doc)}`,
     `phụ trách: ${docAssignee(doc)}`,
     flags.length ? flags.join(" · ") : null,

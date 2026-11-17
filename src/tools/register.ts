@@ -59,10 +59,17 @@ export function registerTools(
     "vwork_me",
     {
       description:
-        "Xem tài khoản VWork đang đăng nhập và danh sách quyền của mình (permissions/me).",
+        "Xem hồ sơ tài khoản VWork đang đăng nhập (họ tên, username, phòng ban) và danh sách quyền.",
       inputSchema: z.object({}),
     },
-    async () => guard(async () => ok(json(unwrap(await client.get("/permissions/me"))))),
+    async () =>
+      guard(async () => {
+        const [profile, permissions] = await Promise.all([
+          client.get("/user/getUserInfo"),
+          client.get("/permissions/me"),
+        ]);
+        return ok(json({ profile: unwrap(profile), permissions: unwrap(permissions) }));
+      }),
   );
 
   server.registerTool(
@@ -140,7 +147,7 @@ export function registerTools(
     async ({ project, status, includeDone, limit }) =>
       guard(async () => {
         const [meBody, docsBody] = await Promise.all([
-          client.get("/permissions/me"),
+          client.get("/user/getUserInfo"),
           client.get(`/project-tracker/${project ?? config.project}/docs`),
         ]);
         const identity = extractIdentity(meBody);
@@ -242,7 +249,7 @@ export function registerTools(
     async ({ project }) =>
       guard(async () => {
         const [me, tracker, tickets, unread] = await Promise.allSettled([
-          client.get("/permissions/me"),
+          client.get("/user/getUserInfo"),
           client.get(`/project-tracker/${project ?? config.project}/docs`),
           client.get("/tickets", { limit: 5 }),
           client.get("/notification/unread-count"),

@@ -3,9 +3,16 @@ import { docAssignee, docStatus, isDoneStatus, type TrackerDoc } from "./tracker
 
 export interface Identity {
   name?: string;
+  shortName?: string;
   username?: string;
   email?: string;
   id?: string;
+}
+
+export function identityAliases(identity: Identity): string[] {
+  return [identity.name, identity.shortName, identity.username, identity.email]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.toLowerCase());
 }
 
 const NAME_FIELDS = ["fullName", "full_name", "name", "displayName", "display_name"];
@@ -28,8 +35,12 @@ export function extractIdentity(me: unknown): Identity {
     root
   ) as Record<string, unknown>;
 
+  const name = pickString(account, NAME_FIELDS) ?? pickString(root, NAME_FIELDS);
+  const tokens = (name ?? "").trim().split(/\s+/);
   return {
-    name: pickString(account, NAME_FIELDS) ?? pickString(root, NAME_FIELDS),
+    name,
+    // Task trong vWork ghi owner bằng tên gọi ("Phước"), không phải họ tên đầy đủ.
+    shortName: tokens.length > 1 ? tokens[tokens.length - 1] : undefined,
     username: pickString(account, ["username", "userName"]) ?? pickString(root, ["username"]),
     email: pickString(account, ["email", "emailAddress"]) ?? pickString(root, ["email"]),
     id: pickString(account, ID_FIELDS) ?? pickString(root, ID_FIELDS),
@@ -63,9 +74,7 @@ export function filterMyTasks(
   identity: Identity,
   filters: MyTaskFilters = {},
 ): TrackerDoc[] {
-  const needles = [identity.name, identity.username, identity.email]
-    .filter((value): value is string => Boolean(value))
-    .map((value) => value.toLowerCase());
+  const needles = identityAliases(identity);
   const status = filters.status?.trim().toLowerCase();
   const includeDone = filters.includeDone ?? true;
   const limit = filters.limit ?? 50;

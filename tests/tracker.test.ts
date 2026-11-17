@@ -89,3 +89,31 @@ describe("field helpers", () => {
     expect(docAssignee(docs[2]!)).toBe("Phước, Bình");
   });
 });
+
+describe("schema thật của vwork", () => {
+  const doc = {
+    collection: "tasks",
+    doc_id: "A01",
+    data: {
+      code: "A01",
+      feature: "Đăng nhập bằng tài khoản VNFITE Work",
+      status: "Chưa làm",
+      owner: "Chiến",
+      owners: ["Chiến"],
+      due: "2026-11-26",
+      prio: "P0",
+      release: "R1",
+      blocked: false,
+    },
+  };
+
+  it("title lấy từ feature, code lấy từ data.code", async () => {
+    const { docTitle, docCode, formatDoc } = await import("../src/tools/tracker.js");
+    expect(docTitle(doc)).toContain("Đăng nhập");
+    expect(docCode(doc)).toBe("A01");
+    const line = formatDoc(doc, new Date("2026-11-17T00:00:00Z"));
+    expect(line).toContain("P0");
+    expect(line).toContain("R1");
+    expect(line).toContain("2026-11-26");
+  });
+});
