@@ -1,0 +1,30 @@
+{
+  "name": "vwork-mcp",
+  "version": "0.1.0",
+  "description": "MCP server cho VNFITE Work (tiến độ dự án, ticket, thông báo)",
+  "type": "module",
+  "bin": {
+    "vwork-mcp": "dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "dotenv": "^18.0.10",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
