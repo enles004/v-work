@@ -4,7 +4,8 @@
   "description": "MCP server cho VNFITE Work — tiến độ dự án, ticket, thông báo (stdio)",
   "type": "module",
   "bin": {
-    "v-work": "dist/cli.js"
+    "v-work": "dist/cli.js",
+    "vwork": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
