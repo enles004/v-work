@@ -1,4 +1,4 @@
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
@@ -106,7 +106,10 @@ describe("xoay token giữa nhiều process", () => {
 
 describe("lỗi ghi token", () => {
   it("login báo lỗi thay vì giả vờ thành công", async () => {
-    const config = { ...(await tempConfig()), tokenFile: "/dev/null/tokens.json" };
+    const base = await tempConfig();
+    const blocker = `${base.tokenFile}.blocker`;
+    await writeFile(blocker, "x"); // file đứng chỗ thư mục -> không thể tạo token file
+    const config = { ...base, tokenFile: `${blocker}/tokens.json` };
     const auth = new AuthSession(config, vi.fn(async () => loginResponse()) as never);
 
     await expect(auth.login()).rejects.toThrow(/không ghi được token file/);
