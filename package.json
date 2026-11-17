@@ -14,8 +14,7 @@
     "test": "vitest run",
     "inspect": "npx @modelcontextprotocol/inspector node dist/cli.js",
     "auth:check": "tsx scripts/check.ts",
-    "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20"
