@@ -138,3 +138,15 @@ describe("write lỗi nhưng cache", () => {
     expect(url).toContain("status=open");
   });
 });
+
+describe("client chặn path traversal đã mã hoá", () => {
+  it("không gửi request và không đổi sang /auth", async () => {
+    const fetchImpl = vi.fn(async () => jsonResponse({ data: 1 }));
+    const client = new VworkClient({ ...config, allowWrite: true }, fakeAuth() as never, fetchImpl as never);
+
+    await expect(
+      client.request("POST", "/tickets/%252525252e%252525252e/auth/login", { body: {} }),
+    ).rejects.toThrow();
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});

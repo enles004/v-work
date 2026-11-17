@@ -47,3 +47,12 @@ describe("double-encode", () => {
     expect(() => assertAllowedPath("/tickets/%252e%252e/auth/login", true, "POST")).toThrow();
   });
 });
+
+describe("encode nhiều lớp", () => {
+  it("chặn encode 5 lớp và mọi độ sâu", async () => {
+    const { normalizePath } = await import("../src/tools/api.js");
+    expect(() => normalizePath("/tickets/%252525252e%252525252e/auth/login")).toThrow();
+    expect(() => assertAllowedPath("/tickets/%252525252e%252525252e/auth/login", true, "POST")).toThrow();
+    expect(() => assertAllowedPath("/tickets/%252525252e%252525252e/permissions/roles", true, "GET")).toThrow();
+  });
+});

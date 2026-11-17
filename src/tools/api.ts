@@ -19,6 +19,8 @@ export const READ_PREFIXES = [
 // Chỉ mở cho các nhóm an toàn; mọi nhóm khác vẫn phải dùng tool chuyên dụng.
 export const WRITE_PREFIXES = ["/project-tracker", "/tickets", "/notification"];
 
+const percentEncoded = /%[0-9a-f]{2}/i;
+
 export class PathNotAllowedError extends Error {
   constructor(message: string) {
     super(message);
@@ -28,25 +30,36 @@ export class PathNotAllowedError extends Error {
 
 /** Chuẩn hoá path trước khi kiểm allowlist: chặn absolute URL và dot-segment đã mã hoá. */
 export function normalizePath(path: string): string {
-  if (!path.startsWith("/") || path.includes("://")) {
+  if (!path.startsWith("/") || path.includes("://") || path.includes("\\")) {
     throw new PathNotAllowedError(`đường dẫn không hợp lệ: ${path}`);
   }
-  const url = new URL(path, "http://localhost");
-  let decoded = url.pathname;
-  try {
-    // Decode lặp để chặn cả %252e%252e (double-encode).
-    for (let depth = 0; depth < 4; depth += 1) {
-      const next = decodeURIComponent(decoded);
-      if (next === decoded) break;
-      decoded = next;
+
+  // Decode tới khi ổn định để không còn lớp mã hoá nào lọt qua allowlist.
+  let decoded = path;
+  for (let depth = 0; depth < 10; depth += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      throw new PathNotAllowedError(`đường dẫn mã hoá không hợp lệ: ${path}`);
     }
-  } catch {
-    throw new PathNotAllowedError(`đường dẫn mã hoá không hợp lệ: ${path}`);
+    if (next === decoded) break;
+    decoded = next;
   }
-  if (decoded.includes("..") || decoded.includes("\\")) {
-    throw new PathNotAllowedError(`đường dẫn chứa ../ không được phép: ${path}`);
+
+  if (percentEncoded.test(decoded)) {
+    throw new PathNotAllowedError(`đường dẫn còn mã hoá sau khi decode: ${path}`);
   }
-  return decoded;
+  if (decoded.split("/").some((segment) => segment === ".." || segment === ".")) {
+    throw new PathNotAllowedError(`đường dẫn chứa dot-segment (../): ${path}`);
+  }
+
+  // Invariant: path được kiểm phải đúng bằng path sẽ gọi (new URL không được đổi nó).
+  const canonical = new URL(decoded, "http://localhost").pathname;
+  if (canonical !== decoded) {
+    throw new PathNotAllowedError(`path không ổn định: ${path}`);
+  }
+  return canonical;
 }
 
 export function assertAllowedPath(path: string, allowWrite: boolean, method: string): void {
