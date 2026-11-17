@@ -38,6 +38,7 @@ export class AuthSession {
   ) {}
 
   async accessToken(): Promise<string> {
+    if (!this.tokens) await this.loadTokens();
     if (this.tokens && !this.expiresSoon(this.tokens.accessToken)) {
       return this.tokens.accessToken;
     }
@@ -48,10 +49,18 @@ export class AuthSession {
         this.tokens = null;
       }
     }
+    if (!this.config.username || !this.config.password) {
+      throw new AuthError(
+        "chưa đăng nhập. Chạy `vwork-mcp login` (hoặc đặt VWORK_USERNAME/VWORK_PASSWORD).",
+      );
+    }
     return this.login();
   }
 
   async login(): Promise<string> {
+    if (!this.config.username || !this.config.password) {
+      throw new AuthError("thiếu VWORK_USERNAME/VWORK_PASSWORD để đăng nhập");
+    }
     const response = await this.fetchImpl(`${this.config.baseUrl}/auth/login`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -79,7 +88,7 @@ export class AuthSession {
   async refresh(): Promise<string> {
     if (this.refreshing) return this.refreshing;
     this.refreshing = (async () => {
-      const tokens = this.tokens ?? (await this.loadFromDisk());
+      const tokens = this.tokens ?? (await this.loadTokens());
       if (!tokens?.refreshToken) throw new AuthError("không có refreshToken");
 
       const response = await this.fetchImpl(`${this.config.baseUrl}/auth/refreshToken`, {
@@ -125,7 +134,7 @@ export class AuthSession {
     }
   }
 
-  private async loadFromDisk(): Promise<Tokens | null> {
+  async loadTokens(): Promise<Tokens | null> {
     try {
       const raw = await readFile(this.config.tokenFile, "utf8");
       const parsed = JSON.parse(raw) as Tokens;

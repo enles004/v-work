@@ -40,8 +40,8 @@ export const configSchema = z.object({
     .default("https://vWork.vnfite.com.vn")
     .refine(isUrl, "VWORK_BASE_URL phải là URL hợp lệ")
     .transform((value) => value.replace(/\/+$/, "")),
-  username: z.string().min(1, "thiếu VWORK_USERNAME"),
-  password: z.string().min(1, "thiếu VWORK_PASSWORD"),
+  username: z.string().min(1).optional(),
+  password: z.string().min(1).optional(),
   project: z.string().min(1).default("eoffice"),
   allowWrite: boolFromEnv.transform((value) => value ?? false),
   cacheTtlMs: intFromEnv(30_000),

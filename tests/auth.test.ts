@@ -67,3 +67,13 @@ describe("AuthSession", () => {
     await expect(auth.login()).rejects.toThrow(/đăng nhập thất bại/);
   });
 });
+
+
+describe("AuthSession chưa đăng nhập", () => {
+  it("báo lỗi hướng dẫn chạy login", async () => {
+    const config = await tempConfig();
+    const auth = new AuthSession({ ...config, username: undefined, password: undefined }, vi.fn() as never);
+
+    await expect(auth.accessToken()).rejects.toThrow(/vwork-mcp login/);
+  });
+});

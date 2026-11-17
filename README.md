@@ -28,15 +28,22 @@ Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng t
 npm install
 npm run build
 
-cp .env.example .env
-# điền VWORK_USERNAME / VWORK_PASSWORD
+cp .env.example .env   # chọn VWORK_PROJECT, các biến khác tuỳ chọn
 
-npm run auth:check   # đăng nhập thử + in tài khoản, số doc, field mẫu
+# Đăng nhập một lần (giống `opencode mcp auth` nhưng chạy local)
+node dist/cli.js login
+node dist/cli.js status
+node dist/cli.js whoami
 ```
 
-`auth:check` in ra `✅ Đăng nhập OK: {name, username, email, id}`. Lần đầu chạy sẽ
-lưu token vào `~/.config/vwork-mcp/tokens.json` (chmod 600); các lần sau tự dùng
-token và tự refresh, không cần đăng nhập lại.
+`login` hỏi username/password (password ẩn), lưu token vào
+`~/.config/vwork-mcp/tokens.json` (chmod 600). Server dùng token này và tự refresh;
+khi hết hạn hoàn toàn thì chạy `login` lại.
+
+Cách khác (không khuyến nghị): đặt `VWORK_USERNAME`/`VWORK_PASSWORD` trong env của
+MCP client — server tự đăng nhập. Password sẽ nằm trong config client.
+
+`npm run auth:check` vẫn dùng để xem tài khoản + cấu trúc doc thật.
 
 ## Cấu hình client
 
@@ -50,8 +57,6 @@ hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
       "command": "node",
       "args": ["/home/faris/code/My_Workspace/vwork-mcp/dist/server.js"],
       "env": {
-        "VWORK_USERNAME": "your.username",
-        "VWORK_PASSWORD": "your.password",
         "VWORK_PROJECT": "eoffice"
       }
     }
@@ -60,6 +65,16 @@ hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
 ```
 
 **Cursor / VS Code** (`.cursor/mcp.json` hoặc `.vscode/mcp.json`): cùng cấu trúc trên.
+
+**Claude Code**:
+
+```bash
+claude mcp add vwork -- node /home/faris/code/My_Workspace/vwork-mcp/dist/cli.js
+/mcp     # xem server đã kết nối + danh sách tool
+```
+
+Lưu ý: `/mcp` trong Claude và `opencode mcp auth` chỉ có flow OAuth cho server **remote
+HTTP**. Server stdio (như server này) không có flow đó — auth nằm ở CLI `login` + token file.
 
 Debug bằng MCP Inspector:
 
@@ -103,6 +118,16 @@ Câu hỏi mẫu:
 npm test        # 26 test, mock toàn bộ HTTP, không gọi mạng
 npm run build
 npm run dev     # tsx, dùng khi debug
+```
+
+CLI:
+
+```bash
+node dist/cli.js            # chạy server (mặc định)
+node dist/cli.js login      # đăng nhập, lưu token
+node dist/cli.js status     # kiểm tra token
+node dist/cli.js whoami     # in tài khoản hiện tại
+node dist/cli.js logout     # xoá token
 ```
 
 Cấu trúc:

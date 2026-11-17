@@ -6,7 +6,7 @@ import { VworkClient } from "./client.js";
 import { loadConfig } from "./config.js";
 import { registerTools } from "./tools/register.js";
 
-async function main(): Promise<void> {
+export async function startServer(): Promise<void> {
   const config = loadConfig();
   const auth = new AuthSession(config);
   const client = new VworkClient(config, auth);
@@ -22,7 +22,9 @@ async function main(): Promise<void> {
   );
 }
 
-main().catch((error) => {
-  console.error(`[vwork-mcp] lỗi khởi động: ${(error as Error).message}`);
-  process.exit(1);
-});
+if (process.argv[1]?.endsWith("server.js") || process.argv[1]?.endsWith("server.ts")) {
+  startServer().catch((error) => {
+    console.error(`[vwork-mcp] lỗi khởi động: ${(error as Error).message}`);
+    process.exit(1);
+  });
+}

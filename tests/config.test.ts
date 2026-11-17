@@ -25,7 +25,9 @@ describe("loadConfig", () => {
     );
   });
 
-  it("thiếu username thì lỗi", () => {
-    expect(() => loadConfig({ VWORK_PASSWORD: "p" } as NodeJS.ProcessEnv)).toThrow();
+  it("username/password là tuỳ chọn (dùng token file)", () => {
+    const config = loadConfig({} as NodeJS.ProcessEnv);
+    expect(config.username).toBeUndefined();
+    expect(config.tokenFile).toContain("tokens.json");
   });
 });
