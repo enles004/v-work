@@ -24,6 +24,23 @@ Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng t
 
 ## Cài đặt
 
+### Cài global — gõ `vwork` trực tiếp (không cần npx)
+
+```bash
+npm i -g https://github.com/enles004/v-work/archive/refs/heads/master.tar.gz
+vwork auth
+vwork tasks --mine
+```
+
+Cài xong có cả hai lệnh: `vwork` và `v-work`. Cập nhật phiên bản mới: chạy lại
+lệnh `npm i -g` ở trên. (npx chỉ chạy tạm, không tạo lệnh cố định.)
+
+Config MCP client có thể dùng binary global:
+
+```json
+{ "mcpServers": { "vwork": { "command": "vwork" } } }
+```
+
 ### Qua npx (sau khi publish)
 
 ```bash
