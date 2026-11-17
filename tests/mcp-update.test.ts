@@ -82,3 +82,12 @@ describe("vwork_api với query nhúng", () => {
     expect(client.request).toHaveBeenCalled();
   });
 });
+
+describe("vwork_my_tasks overdueOnly", () => {
+  it("lọc task quá hạn", async () => {
+    const { handlers } = captureHandlers(false);
+    // handler cần client trả docs; captureHandlers.get trả doc không có due nên overdue = 0
+    const result = await handlers.get("vwork_my_tasks")!({ overdueOnly: true, includeDone: false });
+    expect(result.content[0]!.text).toContain("Không có task");
+  });
+});

@@ -14,6 +14,7 @@ import {
   docTitle,
   extractDocs,
   formatDoc,
+  isOverdue,
   searchDocs,
   summarizeDocs,
 } from "./tracker.js";
@@ -142,21 +143,24 @@ export function registerTools(
         project: projectArg,
         status: z.string().optional().describe("lọc theo trạng thái, khớp một phần"),
         includeDone: z.boolean().default(true).describe("gồm cả task đã xong"),
+        overdueOnly: z.boolean().default(false).describe("chỉ task quá hạn"),
         limit: z.number().int().min(1).max(200).default(50),
       }),
     },
-    async ({ project, status, includeDone, limit }) =>
+    async ({ project, status, includeDone, overdueOnly, limit }) =>
       guard(async () => {
         const [meBody, docsBody] = await Promise.all([
           client.get("/user/getUserInfo"),
           client.get(`/project-tracker/${project ?? config.project}/docs`),
         ]);
         const identity = extractIdentity(meBody);
-        const docs = filterMyTasks(extractDocs(docsBody), identity, {
+        let docs = filterMyTasks(extractDocs(docsBody), identity, {
           status,
           includeDone,
-          limit,
+          limit: 5000,
         });
+        if (overdueOnly) docs = docs.filter((doc) => isOverdue(doc, new Date()));
+        docs = docs.slice(0, limit);
         const who = identity.name ?? identity.username ?? identity.email ?? "tài khoản hiện tại";
         if (docs.length === 0) {
           return ok(`Tài khoản: ${who}\nKhông có task nào khớp điều kiện.`);
