@@ -1,0 +1,45 @@
+import { describe, expect, it } from "vitest";
+
+import { extractIdentity, filterMyTasks } from "../src/tools/mine.js";
+
+const me = {
+  data: {
+    account: { id: "acc-1", fullName: "Phước Nguyễn", username: "phuoc.nguyen", email: "p@x.vn" },
+  },
+};
+
+const docs = [
+  { doc_id: "a", title: "Task của tôi", assignee: { name: "Phước Nguyễn" }, status: "todo" },
+  { doc_id: "b", title: "Task của người khác", assignee: "An", status: "todo" },
+  { doc_id: "c", title: "Task qua username", assignee: { username: "phuoc.nguyen" }, status: "done" },
+  { doc_id: "d", title: "Task qua id", assignee: { id: "acc-1" }, status: "doing" },
+];
+
+describe("extractIdentity", () => {
+  it("lấy name/username/email/id từ envelope", () => {
+    const identity = extractIdentity(me);
+    expect(identity.name).toBe("Phước Nguyễn");
+    expect(identity.username).toBe("phuoc.nguyen");
+    expect(identity.id).toBe("acc-1");
+  });
+});
+
+describe("filterMyTasks", () => {
+  it("chỉ giữ doc thuộc về tôi (name/username/id)", () => {
+    const identity = extractIdentity(me);
+    expect(filterMyTasks(docs, identity).map((d) => d.doc_id)).toEqual(["a", "c", "d"]);
+  });
+
+  it("bỏ task done khi includeDone=false", () => {
+    const identity = extractIdentity(me);
+    expect(filterMyTasks(docs, identity, { includeDone: false }).map((d) => d.doc_id)).toEqual([
+      "a",
+      "d",
+    ]);
+  });
+
+  it("lọc thêm theo status", () => {
+    const identity = extractIdentity(me);
+    expect(filterMyTasks(docs, identity, { status: "doing" }).map((d) => d.doc_id)).toEqual(["d"]);
+  });
+});

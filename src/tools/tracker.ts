@@ -46,6 +46,10 @@ export function extractDocs(body: unknown): TrackerDoc[] {
   return asArray(data) as TrackerDoc[];
 }
 
+export function isDoneStatus(status: string): boolean {
+  return DONE_STATUSES.has(status.trim().toLowerCase());
+}
+
 export function docStatus(doc: TrackerDoc): string {
   const value = nestedFieldOf(doc, STATUS_FIELDS);
   if (typeof value === "string" && value.trim()) return value.trim();

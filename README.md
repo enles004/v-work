@@ -30,7 +30,13 @@ npm run build
 
 cp .env.example .env
 # điền VWORK_USERNAME / VWORK_PASSWORD
+
+npm run auth:check   # đăng nhập thử + in tài khoản, số doc, field mẫu
 ```
+
+`auth:check` in ra `✅ Đăng nhập OK: {name, username, email, id}`. Lần đầu chạy sẽ
+lưu token vào `~/.config/vwork-mcp/tokens.json` (chmod 600); các lần sau tự dùng
+token và tự refresh, không cần đăng nhập lại.
 
 ## Cấu hình client
 
@@ -66,6 +72,7 @@ npm run inspect
 | Tool | Việc |
 |---|---|
 | `vwork_me` | tài khoản + quyền hiện tại |
+| `vwork_my_tasks` | **task được giao cho chính bạn** (tự resolve danh tính) |
 | `vwork_project_overview` | ảnh chụp nhanh: tài khoản, tổng hợp tiến độ, ticket, thông báo chưa đọc |
 | `vwork_tracker_docs` | danh sách doc trong bảng tiến độ |
 | `vwork_tracker_search` | tìm theo từ khoá / trạng thái / người phụ trách / collection / quá hạn |

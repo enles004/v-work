@@ -6,6 +6,7 @@ import { AuthError } from "../auth.js";
 import { VworkClient, VworkError } from "../client.js";
 import { unwrap } from "../format.js";
 import { assertAllowedPath } from "./api.js";
+import { extractIdentity, filterMyTasks } from "./mine.js";
 import {
   docCollection,
   docStatus,
@@ -120,6 +121,41 @@ export function registerTools(
       guard(async () => {
         const body = await client.get(`/project-tracker/${project ?? config.project}/docs`);
         return ok(json(summarizeDocs(extractDocs(body))));
+      }),
+  );
+
+  server.registerTool(
+    "vwork_my_tasks",
+    {
+      description:
+        "Task/doc được giao cho CHÍNH tài khoản đang đăng nhập. Tự lấy danh tính từ /permissions/me " +
+        "rồi khớp theo tên/username/email/id. Dùng khi người dùng hỏi 'tôi đang có task gì'.",
+      inputSchema: z.object({
+        project: projectArg,
+        status: z.string().optional().describe("lọc theo trạng thái, khớp một phần"),
+        includeDone: z.boolean().default(true).describe("gồm cả task đã xong"),
+        limit: z.number().int().min(1).max(200).default(50),
+      }),
+    },
+    async ({ project, status, includeDone, limit }) =>
+      guard(async () => {
+        const [meBody, docsBody] = await Promise.all([
+          client.get("/permissions/me"),
+          client.get(`/project-tracker/${project ?? config.project}/docs`),
+        ]);
+        const identity = extractIdentity(meBody);
+        const docs = filterMyTasks(extractDocs(docsBody), identity, {
+          status,
+          includeDone,
+          limit,
+        });
+        const who = identity.name ?? identity.username ?? identity.email ?? "tài khoản hiện tại";
+        if (docs.length === 0) {
+          return ok(`Tài khoản: ${who}\nKhông có task nào khớp điều kiện.`);
+        }
+        return ok(
+          `Tài khoản: ${who}\n${docs.length} task:\n\n${docs.map((doc) => formatDoc(doc)).join("\n")}`,
+        );
       }),
   );
 
