@@ -25,10 +25,11 @@ export function parseFlags(argv: string[]): ParsedArgs {
       positional.push(token);
       continue;
     }
-    const [rawKey, inlineValue] = token.slice(2).split("=", 2);
-    const key = rawKey ?? "";
-    if (inlineValue !== undefined) {
-      flags[key] = inlineValue;
+    const raw = token.slice(2);
+    const equals = raw.indexOf("=");
+    const key = equals >= 0 ? raw.slice(0, equals) : raw;
+    if (equals >= 0) {
+      flags[key] = raw.slice(equals + 1);
       continue;
     }
     const next = rest[index + 1];

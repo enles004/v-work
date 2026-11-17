@@ -34,3 +34,10 @@ describe("assertKnownFlags", () => {
     expect(() => assertKnownFlags({ json: true }, ["json", "help"], "tasks")).not.toThrow();
   });
 });
+
+describe("giá trị có dấu =", () => {
+  it("giữ nguyên phần sau dấu = đầu tiên", () => {
+    const args = parseFlags(["update", "A01", "--note=a=b c"]);
+    expect(flagString(args.flags, "note")).toBe("a=b c");
+  });
+});

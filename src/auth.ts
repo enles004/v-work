@@ -88,7 +88,8 @@ export class AuthSession {
   async refresh(): Promise<string> {
     if (this.refreshing) return this.refreshing;
     this.refreshing = (async () => {
-      const tokens = this.tokens ?? (await this.loadTokens());
+      // Đọc lại từ disk: process khác (CLI/MCP) có thể vừa xoay token.
+      const tokens = (await this.loadTokens()) ?? this.tokens;
       if (!tokens?.refreshToken) throw new AuthError("không có refreshToken");
 
       const response = await this.fetchImpl(`${this.config.baseUrl}/auth/refreshToken`, {
@@ -124,14 +125,16 @@ export class AuthSession {
   }
 
   private async persist(tokens: Tokens): Promise<void> {
-    this.tokens = tokens;
     try {
       await mkdir(dirname(this.config.tokenFile), { recursive: true });
       await writeFile(this.config.tokenFile, JSON.stringify(tokens), { mode: 0o600 });
       await chmod(this.config.tokenFile, 0o600);
     } catch (error) {
-      console.error(`[vwork-mcp] không ghi được token file: ${(error as Error).message}`);
+      throw new AuthError(
+        `không ghi được token file ${this.config.tokenFile}: ${(error as Error).message}`,
+      );
     }
+    this.tokens = tokens;
   }
 
   async loadTokens(): Promise<Tokens | null> {

@@ -1,5 +1,6 @@
 import type { Config } from "./config.js";
 import { AuthError, AuthSession } from "./auth.js";
+import { normalizePath } from "./tools/api.js";
 
 type FetchLike = typeof fetch;
 
@@ -49,18 +50,23 @@ export class VworkClient {
       throw new VworkError(`đường dẫn API không hợp lệ: ${path}`, 400);
     }
 
-    const url = this.buildUrl(path, options.query);
+    const url = this.buildUrl(normalizePath(path), options.query);
     if (upper === "GET") {
       const cached = this.cache.get(url);
       if (cached && cached.expiresAt > Date.now()) return cached.value as T;
     }
 
     const result = await this.send<T>(upper, url, options);
-    if (upper === "GET" && this.config.cacheTtlMs > 0) {
-      this.cache.set(url, {
-        expiresAt: Date.now() + this.config.cacheTtlMs,
-        value: result,
-      });
+    if (upper === "GET") {
+      if (this.config.cacheTtlMs > 0) {
+        this.cache.set(url, {
+          expiresAt: Date.now() + this.config.cacheTtlMs,
+          value: result,
+        });
+      }
+    } else {
+      // Ghi xong thì dữ liệu cũ trong cache không còn đúng.
+      this.cache.clear();
     }
     return result;
   }
@@ -86,7 +92,17 @@ export class VworkClient {
       response = await this.fetchOnce(method, url, token, options);
     }
 
-    const body = await response.json().catch(() => null);
+    let body: unknown = null;
+    try {
+      body = await response.json();
+    } catch {
+      if (response.ok) {
+        throw new VworkError(
+          `VWork trả HTTP ${response.status} nhưng body không phải JSON`,
+          response.status,
+        );
+      }
+    }
     if (!response.ok) {
       const message =
         (body as { message?: string } | null)?.message ?? `VWork trả HTTP ${response.status}`;

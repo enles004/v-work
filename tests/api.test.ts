@@ -28,3 +28,16 @@ describe("assertAllowedPath", () => {
     );
   });
 });
+
+describe("normalizePath chống bypass", () => {
+  it("chặn dot-segment đã mã hoá", () => {
+    expect(() => assertAllowedPath("/tickets/%2e%2e/auth/login", true, "POST")).toThrow(/auth|\.\./);
+    expect(() => assertAllowedPath("/tickets/%2e%2e/permissions/roles", false, "GET")).toThrow(
+      /\.\.|cho phép/,
+    );
+  });
+
+  it("giữ path bình thường", () => {
+    expect(() => assertAllowedPath("/tickets/1", true, "PATCH")).not.toThrow();
+  });
+});

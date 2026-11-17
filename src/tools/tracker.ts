@@ -19,6 +19,7 @@ const ASSIGNEE_FIELDS = [
   "assignees",
   "assignedTo",
   "owner",
+  "owners",
   "pic",
   "nguoiphutrach",
   "người phụ trách",

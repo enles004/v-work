@@ -38,3 +38,18 @@ describe("parseCommand", () => {
     expect(parseCommand(["xyz"])).toEqual({ kind: "invalid", value: "xyz" });
   });
 });
+
+describe("auth flags", () => {
+  it("auth <sub> --help trả help", () => {
+    expect(parseCommand(["auth", "login", "--help"])).toEqual({ kind: "help" });
+    expect(parseCommand(["auth", "logout", "--help"])).toEqual({ kind: "help" });
+  });
+
+  it("auth với flag lạ bị từ chối", () => {
+    expect(parseCommand(["auth", "--bogus"])).toEqual({ kind: "invalid", value: "auth --bogus" });
+    expect(parseCommand(["auth", "login", "extra"])).toEqual({
+      kind: "invalid",
+      value: "auth login extra",
+    });
+  });
+});

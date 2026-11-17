@@ -80,6 +80,12 @@ async function commandStatus(): Promise<void> {
   const config = loadConfig();
   const session = new AuthSession(config);
   const token = await session.loadTokens();
+  if (process.argv.includes("--json")) {
+    process.stdout.write(
+      `${JSON.stringify({ loggedIn: Boolean(token), tokenFile: config.tokenFile, baseUrl: config.baseUrl, project: config.project })}\n`,
+    );
+    return;
+  }
   if (!token) {
     console.log("Chưa đăng nhập. Chạy: npx -y v-work auth");
     console.log(`Token file: ${config.tokenFile}`);
@@ -99,7 +105,12 @@ async function commandWhoami(): Promise<void> {
   const config = loadConfig();
   const client = new VworkClient(config, new AuthSession(config));
   const me = await client.get("/user/getUserInfo");
-  console.log(extractIdentity(me));
+  const identity = extractIdentity(me);
+  if (process.argv.includes("--json")) {
+    process.stdout.write(`${JSON.stringify(identity)}\n`);
+    return;
+  }
+  console.log(identity);
 }
 
 async function main(): Promise<void> {

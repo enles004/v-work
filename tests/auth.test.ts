@@ -77,3 +77,38 @@ describe("AuthSession chưa đăng nhập", () => {
     await expect(auth.accessToken()).rejects.toThrow(/vwork-mcp login/);
   });
 });
+
+describe("xoay token giữa nhiều process", () => {
+  it("session thứ hai đọc token mới từ disk trước khi refresh", async () => {
+    const config = await tempConfig();
+    let valid = "r1";
+    const backend = vi.fn(async (url: string, init: RequestInit) => {
+      const body = JSON.parse(String(init.body));
+      if (url.endsWith("/auth/login")) return loginResponse("a1", "r1");
+      if (body.refreshToken !== valid) {
+        return new Response(JSON.stringify({ message: "stale" }), { status: 401 });
+      }
+      const nextNumber = Number(String(valid).slice(1)) + 1;
+      valid = `r${nextNumber}`;
+      return loginResponse(`a${nextNumber}`, valid);
+    });
+
+    const first = new AuthSession(config, backend as never);
+    await first.accessToken();
+    const second = new AuthSession(config, backend as never);
+    await second.loadTokens();
+
+    await first.refresh(); // disk: r2
+    await expect(second.refresh()).resolves.toBe("a3");
+    expect(valid).toBe("r3");
+  });
+});
+
+describe("lỗi ghi token", () => {
+  it("login báo lỗi thay vì giả vờ thành công", async () => {
+    const config = { ...(await tempConfig()), tokenFile: "/dev/null/tokens.json" };
+    const auth = new AuthSession(config, vi.fn(async () => loginResponse()) as never);
+
+    await expect(auth.login()).rejects.toThrow(/không ghi được token file/);
+  });
+});

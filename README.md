@@ -1,4 +1,4 @@
-# vwork-mcp
+# v-work
 
 MCP server (Node.js + TypeScript) cho **VNFITE Work** — cho phép AI đọc tiến độ dự án,
 ticket, thông báo và gọi các API khác của vWork bằng tài khoản của bạn.
@@ -27,8 +27,8 @@ Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng t
 ### Qua npx (sau khi publish)
 
 ```bash
-npx -y vwork-mcp login     # đăng nhập một lần
-npx -y vwork-mcp status
+npx -y v-work auth      # đăng nhập một lần
+npx -y v-work auth status
 ```
 
 Config MCP client:
@@ -38,7 +38,7 @@ Config MCP client:
   "mcpServers": {
     "vwork": {
       "command": "npx",
-      "args": ["-y", "vwork-mcp"]
+      "args": ["-y", "v-work"]
     }
   }
 }
@@ -47,7 +47,7 @@ Config MCP client:
 Nếu chưa publish lên npm, có thể chạy trực tiếp từ GitHub:
 
 ```bash
-npx -y github:enles004/vwork-mcp login
+npx -y github:enles004/v-work auth
 ```
 
 ### Từ source
@@ -56,8 +56,8 @@ npx -y github:enles004/vwork-mcp login
 npm install
 npm run build
 
-node dist/cli.js login     # hỏi username/password một lần
-node dist/cli.js status
+node dist/cli.js auth      # hỏi username/password một lần
+node dist/cli.js auth status
 ```
 
 **Không cần file `.env`.** Mặc định đã có sẵn:
@@ -70,7 +70,7 @@ Chỉ khi cần đổi mặc định (ví dụ UAT) mới dùng biến môi trư
 `VWORK_PROJECT`, `VWORK_ALLOW_WRITE` trong config của MCP client.
 
 `login` hỏi username/password (password ẩn), lưu token vào
-`~/.config/vwork-mcp/tokens.json` (chmod 600). Server dùng token này và tự refresh;
+`~/.config/v-work/tokens.json` (chmod 600). Server dùng token này và tự refresh;
 khi hết hạn hoàn toàn thì chạy `login` lại.
 
 Cách khác (không khuyến nghị): đặt `VWORK_USERNAME`/`VWORK_PASSWORD` trong env của
@@ -88,7 +88,7 @@ hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
   "mcpServers": {
     "vwork": {
       "command": "node",
-      "args": ["/home/faris/code/My_Workspace/vwork-mcp/dist/cli.js"]
+      "args": ["/home/faris/code/My_Workspace/v-work/dist/cli.js"]
     }
   }
 }
@@ -99,7 +99,7 @@ hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
 **Claude Code**:
 
 ```bash
-claude mcp add vwork -- node /home/faris/code/My_Workspace/vwork-mcp/dist/cli.js
+claude mcp add vwork -- node /home/faris/code/My_Workspace/v-work/dist/cli.js
 /mcp     # xem server đã kết nối + danh sách tool
 ```
 
@@ -125,6 +125,7 @@ npm run inspect
 | `vwork_tickets` | danh sách ticket hỗ trợ |
 | `vwork_ticket` | chi tiết ticket |
 | `vwork_notifications` | thông báo chưa đọc + mới nhất |
+| `vwork_update_task` | cập nhật status/note của task (cần `VWORK_ALLOW_WRITE=true`) |
 | `vwork_api` | gọi API bất kỳ trong allowlist (GET luôn được; ghi phải bật) |
 
 Câu hỏi mẫu:
@@ -138,14 +139,14 @@ Câu hỏi mẫu:
 
 - Mặc định **chỉ đọc**: `VWORK_ALLOW_WRITE=false`. Bật `true` mới cho PATCH/POST/PUT/DELETE.
 - Ghi chỉ mở cho `/project-tracker`, `/tickets`, `/notification`; `/auth/*` và `/permissions/*` luôn bị chặn.
-- Token lưu tại `~/.config/vwork-mcp/tokens.json` (chmod 600), tự refresh và xoay vòng.
+- Token lưu tại `~/.config/v-work/tokens.json` (chmod 600), tự refresh và xoay vòng.
 - Password chỉ nằm trong env của MCP client — không commit, không log.
 - Cache GET 30s để tránh spam API khi AI hỏi liên tiếp.
 
 ## Phát triển
 
 ```bash
-npm test        # 26 test, mock toàn bộ HTTP, không gọi mạng
+npm test        # 64 test, mock toàn bộ HTTP, không gọi mạng
 npm run build
 npm run dev     # tsx, dùng khi debug
 ```
@@ -171,6 +172,6 @@ src/
   tools/
     api.ts         # allowlist cho tool generic
     tracker.ts     # search / summarize / format doc
-    register.ts    # đăng ký 9 tool
+    register.ts    # đăng ký 11 tool
   server.ts        # entrypoint stdio
 ```

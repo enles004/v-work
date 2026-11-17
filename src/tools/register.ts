@@ -136,7 +136,7 @@ export function registerTools(
     "vwork_my_tasks",
     {
       description:
-        "Task/doc được giao cho CHÍNH tài khoản đang đăng nhập. Tự lấy danh tính từ /permissions/me " +
+        "Task/doc được giao cho CHÍNH tài khoản đang đăng nhập. Tự lấy danh tính từ /user/getUserInfo " +
         "rồi khớp theo tên/username/email/id. Dùng khi người dùng hỏi 'tôi đang có task gì'.",
       inputSchema: z.object({
         project: projectArg,

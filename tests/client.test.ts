@@ -84,3 +84,25 @@ describe("VworkClient", () => {
     await expect(client.get("/tickets")).rejects.toThrow(/không có quyền/);
   });
 });
+
+describe("cache và lỗi body", () => {
+  it("xoá cache sau lệnh ghi", async () => {
+    const fetchImpl = vi.fn(async (url: string) =>
+      jsonResponse({ data: { n: fetchImpl.mock.calls.length } }),
+    );
+    const client = new VworkClient({ ...config, allowWrite: true }, fakeAuth() as never, fetchImpl as never);
+
+    await client.get("/tickets");
+    await client.request("PATCH", "/tickets/1", { body: { data: { status: "x" } } });
+    await client.get("/tickets");
+
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it("HTTP 200 với body không phải JSON thì báo lỗi", async () => {
+    const fetchImpl = vi.fn(async () => new Response("<html>oops</html>", { status: 200 }));
+    const client = new VworkClient(config, fakeAuth() as never, fetchImpl as never);
+
+    await expect(client.get("/tickets")).rejects.toThrow(/không phải JSON/);
+  });
+});

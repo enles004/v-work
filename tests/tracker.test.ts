@@ -117,3 +117,17 @@ describe("schema thật của vwork", () => {
     expect(line).toContain("2026-11-26");
   });
 });
+
+describe("owners và envelope", () => {
+  it("đọc owners khi không có owner", async () => {
+    const { docAssignee } = await import("../src/tools/tracker.js");
+    expect(docAssignee({ data: { owners: ["Linh", "Phước"] } })).toBe("Linh, Phước");
+  });
+
+  it("ưu tiên data.code hơn doc_id ngoài envelope", async () => {
+    const { docCode, formatDoc } = await import("../src/tools/tracker.js");
+    const doc = { doc_id: "uuid-001", version: 2, data: { code: "A01", release: "R1", feature: "X" } };
+    expect(docCode(doc)).toBe("A01");
+    expect(formatDoc(doc)).toContain("R1");
+  });
+});

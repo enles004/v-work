@@ -32,9 +32,15 @@ export function fieldOf(doc: unknown, names: string[]): unknown {
 }
 
 export function nestedFieldOf(doc: unknown, names: string[]): unknown {
+  if (!doc || typeof doc !== "object") return undefined;
+  // Doc của vWork bọc dữ liệu thật trong `data`; envelope (doc_id, version) không được che nó.
+  const payload = (doc as Json).data;
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    const inner = fieldOf(payload, names);
+    if (inner !== undefined) return inner;
+  }
   const direct = fieldOf(doc, names);
   if (direct !== undefined) return direct;
-  if (!doc || typeof doc !== "object") return undefined;
   for (const value of Object.values(doc as Json)) {
     if (value && typeof value === "object" && !Array.isArray(value)) {
       const nested = fieldOf(value, names);

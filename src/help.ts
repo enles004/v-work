@@ -55,7 +55,7 @@ BIẾN MÔI TRƯỜNG (tuỳ chọn, không bắt buộc)
 TOOL
   vwork_me · vwork_my_tasks · vwork_project_overview · vwork_tracker_docs
   vwork_tracker_search · vwork_tracker_summary · vwork_tickets
-  vwork_ticket · vwork_notifications · vwork_api
+  vwork_ticket · vwork_notifications · vwork_update_task · vwork_api
 `;
 
 export const VERSION = "0.1.0";

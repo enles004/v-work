@@ -13,6 +13,7 @@ import {
 } from "../tools/tracker.js";
 import { assertKnownFlags, flagBool, flagNumber, flagString, parseFlags } from "./flags.js";
 import { helpFor } from "./help.js";
+import { assertAllowedPath } from "../tools/api.js";
 import { buildChanges, findDoc, hasChanges } from "../tools/update.js";
 
 function json(value: unknown): string {
@@ -212,6 +213,7 @@ export async function runCli(argv: string[]): Promise<void> {
       if (!method || !path) {
         throw new Error('dùng: v-work api <METHOD> <PATH> [--query "k=v,k2=v2"] [--body JSON]');
       }
+      assertAllowedPath(path, config.allowWrite, method);
       const bodyRaw = flagString(args.flags, "body");
       const result = await client.request(method.toUpperCase(), path, {
         query: parseQuery(flagString(args.flags, "query")),

@@ -26,18 +26,34 @@ export class PathNotAllowedError extends Error {
   }
 }
 
-export function assertAllowedPath(path: string, allowWrite: boolean, method: string): void {
-  if (!path.startsWith("/") || path.includes("://") || path.includes("..")) {
+/** Chuẩn hoá path trước khi kiểm allowlist: chặn absolute URL và dot-segment đã mã hoá. */
+export function normalizePath(path: string): string {
+  if (!path.startsWith("/") || path.includes("://")) {
     throw new PathNotAllowedError(`đường dẫn không hợp lệ: ${path}`);
   }
-  if (path.startsWith("/auth/")) {
+  const url = new URL(path, "http://localhost");
+  let decoded = url.pathname;
+  try {
+    decoded = decodeURIComponent(url.pathname);
+  } catch {
+    throw new PathNotAllowedError(`đường dẫn mã hoá không hợp lệ: ${path}`);
+  }
+  if (decoded.includes("..") || decoded.includes("\\")) {
+    throw new PathNotAllowedError(`đường dẫn chứa ../ không được phép: ${path}`);
+  }
+  return decoded;
+}
+
+export function assertAllowedPath(path: string, allowWrite: boolean, method: string): void {
+  const normalized = normalizePath(path);
+  if (normalized.startsWith("/auth/")) {
     throw new PathNotAllowedError("không được gọi API auth qua tool generic");
   }
   const upper = method.toUpperCase();
   if (upper === "GET") {
-    if (!READ_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
+    if (!READ_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`))) {
       throw new PathNotAllowedError(
-        `đường dẫn nằm ngoài danh sách cho phép: ${path}. ` +
+        `đường dẫn nằm ngoài danh sách cho phép: ${normalized}. ` +
           `Cho phép: ${READ_PREFIXES.join(", ")}`,
       );
     }
@@ -46,9 +62,9 @@ export function assertAllowedPath(path: string, allowWrite: boolean, method: str
   if (!allowWrite) {
     throw new PathNotAllowedError("chế độ chỉ đọc: bật VWORK_ALLOW_WRITE=true để gọi API ghi");
   }
-  if (!WRITE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
+  if (!WRITE_PREFIXES.some((prefix) => normalized === prefix || normalized.startsWith(`${prefix}/`))) {
     throw new PathNotAllowedError(
-      `chưa mở ghi cho nhóm này: ${path}. Cho phép ghi: ${WRITE_PREFIXES.join(", ")}`,
+      `chưa mở ghi cho nhóm này: ${normalized}. Cho phép ghi: ${WRITE_PREFIXES.join(", ")}`,
     );
   }
 }

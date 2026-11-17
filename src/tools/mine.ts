@@ -74,7 +74,12 @@ export function filterMyTasks(
   identity: Identity,
   filters: MyTaskFilters = {},
 ): TrackerDoc[] {
-  const needles = identityAliases(identity);
+  const nameAliases = [identity.name, identity.shortName]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.toLowerCase());
+  const accountAliases = [identity.username, identity.email]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => value.toLowerCase());
   const status = filters.status?.trim().toLowerCase();
   const includeDone = filters.includeDone ?? true;
   const limit = filters.limit ?? 50;
@@ -82,7 +87,15 @@ export function filterMyTasks(
   return docs
     .filter((doc) => {
       const assigneeText = docAssignee(doc).toLowerCase();
-      const byText = needles.some((needle) => assigneeText.includes(needle));
+      const segments = assigneeText
+        .split(/\s*[,+]\s*/)
+        .map((segment) => segment.trim())
+        .filter(Boolean);
+      // Tên phải khớp nguyên token ("Phước" không khớp "Phước Anh");
+      // username/email thì so khớp chuỗi vì là định danh duy nhất.
+      const byName = segments.some((segment) => nameAliases.includes(segment));
+      const byAccount = accountAliases.some((alias) => assigneeText.includes(alias));
+      const byText = byName || byAccount;
       const byId = identity.id ? assigneeIds(doc).includes(identity.id) : false;
       if (!byText && !byId) return false;
       if (!includeDone && isDoneStatus(docStatus(doc))) return false;

@@ -25,6 +25,11 @@ export function parseCommand(argv: string[]): Command {
   if (!first) return { kind: "serve" };
 
   if (first === "auth") {
+    const rest = argv.slice(1);
+    if (rest.some((token) => token === "--help" || token === "-h")) return { kind: "help" };
+    if (rest.length > 1 || (rest[0]?.startsWith("-") ?? false)) {
+      return { kind: "invalid", value: `auth ${rest.join(" ")}`.trim() };
+    }
     switch (second) {
       case undefined:
       case "login":

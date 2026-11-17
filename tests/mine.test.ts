@@ -66,3 +66,20 @@ describe("profile phẳng từ /user/getUserInfo", () => {
     expect(filterMyTasks(docs, identity)).toHaveLength(1);
   });
 });
+
+describe("khớp tên chính xác", () => {
+  const identity = { name: "Lê Hữu Phước", shortName: "Phước", username: "phuoclh" };
+
+  it("không nhận task của người có tên chứa tên mình", () => {
+    const docs = [{ doc_id: "x", data: { owner: "Phước Anh", status: "Chưa làm" } }];
+    expect(filterMyTasks(docs, identity)).toHaveLength(0);
+  });
+
+  it("nhận task owners[] và nhiều người", () => {
+    const docs = [
+      { doc_id: "a", data: { owners: ["Linh", "Phước"], status: "Chưa làm" } },
+      { doc_id: "b", data: { owner: "Linh + Phước", status: "Chưa làm" } },
+    ];
+    expect(filterMyTasks(docs, identity).map((d) => d.doc_id)).toEqual(["a", "b"]);
+  });
+});
