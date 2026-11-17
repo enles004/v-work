@@ -31,3 +31,26 @@ describe("loadConfig", () => {
     expect(config.tokenFile).toContain("tokens.json");
   });
 });
+
+describe("đường dẫn token theo OS", () => {
+  it("linux dùng ~/.config", async () => {
+    const { defaultTokenFile } = await import("../src/config.js");
+    expect(defaultTokenFile("linux", {}, "/home/u")).toBe(
+      "/home/u/.config/vwork-mcp/tokens.json",
+    );
+  });
+
+  it("macOS dùng Application Support", async () => {
+    const { defaultTokenFile } = await import("../src/config.js");
+    expect(defaultTokenFile("darwin", {}, "/Users/u")).toBe(
+      "/Users/u/Library/Application Support/vwork-mcp/tokens.json",
+    );
+  });
+
+  it("windows dùng APPDATA", async () => {
+    const { defaultTokenFile } = await import("../src/config.js");
+    expect(defaultTokenFile("win32", { APPDATA: "C:\\Users\\u\\AppData\\Roaming" }, "C:\\Users\\u")).toContain(
+      "vwork-mcp",
+    );
+  });
+});

@@ -2,6 +2,21 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 
+export function defaultTokenFile(
+  platform: NodeJS.Platform = process.platform,
+  env: NodeJS.ProcessEnv = process.env,
+  home: string = homedir(),
+): string {
+  if (platform === "win32") {
+    const appData = env.APPDATA ?? join(home, "AppData", "Roaming");
+    return join(appData, "vwork-mcp", "tokens.json");
+  }
+  if (platform === "darwin") {
+    return join(home, "Library", "Application Support", "vwork-mcp", "tokens.json");
+  }
+  return join(home, ".config", "vwork-mcp", "tokens.json");
+}
+
 const isUrl = (value: string): boolean => {
   try {
     new URL(value);
@@ -45,9 +60,7 @@ export const configSchema = z.object({
   allowWrite: boolFromEnv.transform((value) => value ?? false),
   cacheTtlMs: intFromEnv(30_000),
   timeoutMs: intFromEnv(20_000),
-  tokenFile: z
-    .string()
-    .default(join(homedir(), ".config", "vwork-mcp", "tokens.json")),
+  tokenFile: z.string().default(defaultTokenFile()),
 });
 
 export type Config = z.infer<typeof configSchema>;

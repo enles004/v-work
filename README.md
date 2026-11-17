@@ -152,6 +152,18 @@ Câu hỏi mẫu:
 - "Ticket nào đang mở cho khách hàng X?"
 - "Có thông báo chưa đọc nào không?"
 
+## Nền tảng
+
+Chạy trên Linux, macOS, Windows (Node ≥ 20). Token lưu theo chuẩn từng OS:
+
+| OS | Đường dẫn |
+|---|---|
+| Linux | `~/.config/vwork-mcp/tokens.json` |
+| macOS | `~/Library/Application Support/vwork-mcp/tokens.json` |
+| Windows | `%APPDATA%\vwork-mcp\tokens.json` |
+
+CI GitHub Actions chạy test + typecheck trên cả 3 OS với Node 20 và 22.
+
 ## An toàn
 
 - Mặc định **chỉ đọc**: `VWORK_ALLOW_WRITE=false`. Bật `true` mới cho PATCH/POST/PUT/DELETE.
