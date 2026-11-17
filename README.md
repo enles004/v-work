@@ -28,13 +28,18 @@ Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng t
 npm install
 npm run build
 
-cp .env.example .env   # chọn VWORK_PROJECT, các biến khác tuỳ chọn
-
-# Đăng nhập một lần (giống `opencode mcp auth` nhưng chạy local)
-node dist/cli.js login
+node dist/cli.js login     # hỏi username/password một lần
 node dist/cli.js status
-node dist/cli.js whoami
 ```
+
+**Không cần file `.env`.** Mặc định đã có sẵn:
+
+- base URL: `https://vWork.vnfite.com.vn` (prod)
+- project: `eoffice`
+- chỉ đọc, cache 30s, timeout 20s
+
+Chỉ khi cần đổi mặc định (ví dụ UAT) mới dùng biến môi trường `VWORK_BASE_URL`,
+`VWORK_PROJECT`, `VWORK_ALLOW_WRITE` trong config của MCP client.
 
 `login` hỏi username/password (password ẩn), lưu token vào
 `~/.config/vwork-mcp/tokens.json` (chmod 600). Server dùng token này và tự refresh;
@@ -55,10 +60,7 @@ hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
   "mcpServers": {
     "vwork": {
       "command": "node",
-      "args": ["/home/faris/code/My_Workspace/vwork-mcp/dist/server.js"],
-      "env": {
-        "VWORK_PROJECT": "eoffice"
-      }
+      "args": ["/home/faris/code/My_Workspace/vwork-mcp/dist/cli.js"]
     }
   }
 }
