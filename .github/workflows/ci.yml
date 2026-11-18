@@ -20,4 +20,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npx tsc -p tsconfig.json --noEmit
+      - run: npm run build
+      - name: dist phải đồng bộ với src
+        run: git diff --exit-code -- dist
       - run: node dist/cli.js --version

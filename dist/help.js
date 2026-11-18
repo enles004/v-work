@@ -20,6 +20,7 @@ LỆNH
   api <METHOD> <PATH>   Gọi API bất kỳ: --query "k=v,k2=v2" --body '{"a":1}'
 
   doctor            Chẩn đoán: node, token, kết nối API
+  upgrade           Cập nhật code mới nhất rồi reconnect MCP là xong
   serve             Chạy MCP server qua stdio (Claude/Cursor tự gọi)
   help              Hiện trợ giúp này
   version           Hiện phiên bản

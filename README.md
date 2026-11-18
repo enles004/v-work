@@ -158,6 +158,16 @@ Câu hỏi mẫu:
 - "Ticket nào đang mở cho khách hàng X?"
 - "Có thông báo chưa đọc nào không?"
 
+## Cập nhật
+
+```bash
+vwork upgrade        # git pull + npm install + build (hoặc npm i -g nếu bản global)
+```
+
+Sau đó **reconnect MCP** trong Claude (`/mcp`) là dùng bản mới. Không cần xoá cache, không cần sửa config.
+
+Repo có pre-commit hook tự build + stage `dist/`, và CI kiểm tra `dist` đồng bộ với `src` (bật hook: `git config core.hooksPath .githooks`).
+
 ## Nền tảng
 
 Chạy trên Linux, macOS, Windows (Node ≥ 20). Token lưu theo chuẩn từng OS:

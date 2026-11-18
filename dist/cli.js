@@ -1,5 +1,9 @@
 #!/usr/bin/env node
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 import { AuthSession } from "./auth.js";
 import { VworkClient } from "./client.js";
@@ -99,6 +103,32 @@ async function commandWhoami() {
     }
     console.log(identity);
 }
+const TARBALL = "https://github.com/enles004/v-work/archive/refs/heads/master.tar.gz";
+function runStep(command, args, cwd) {
+    const result = spawnSync(command, args, { cwd, stdio: "inherit", env: process.env });
+    if (result.status !== 0) {
+        throw new Error(`${command} ${args.join(" ")} thất bại (exit ${result.status})`);
+    }
+}
+async function commandUpgrade(asJson) {
+    const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+    const isRepo = existsSync(join(repoRoot, ".git"));
+    if (isRepo) {
+        console.log(`Cập nhật từ repo ${repoRoot} …`);
+        runStep("git", ["pull", "--ff-only"], repoRoot);
+        runStep("npm", ["install", "--silent"], repoRoot);
+        runStep("npm", ["run", "build"], repoRoot);
+    }
+    else {
+        console.log("Cập nhật bản cài global từ GitHub …");
+        runStep("npm", ["i", "-g", TARBALL]);
+    }
+    if (asJson) {
+        process.stdout.write(`${JSON.stringify({ updated: true, mode: isRepo ? "repo" : "global" })}\n`);
+        return;
+    }
+    console.log("✅ Đã cập nhật. Reconnect MCP trong Claude (/mcp) là dùng bản mới.");
+}
 async function main() {
     const command = parseCommand(process.argv.slice(2));
     switch (command.kind) {
@@ -121,6 +151,10 @@ async function main() {
             process.stdout.write(`v-work ${VERSION}\n`);
             return;
         case "cli":
+            if (command.name === "upgrade") {
+                await commandUpgrade(process.argv.includes("--json"));
+                return;
+            }
             await runCli(process.argv.slice(2));
             return;
         case "invalid":

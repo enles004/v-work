@@ -8,6 +8,7 @@ export const CLI_COMMANDS = new Set([
     "update",
     "api",
     "doctor",
+    "upgrade",
 ]);
 export function parseCommand(argv) {
     const [first, second] = argv;
