@@ -63,6 +63,38 @@ export class VworkClient {
         }
         return result;
     }
+    async download(path) {
+        const url = this.buildUrl(normalizePath(path));
+        let token = await this.auth.accessToken();
+        let response = await this.fetchImpl(url, {
+            method: "GET",
+            headers: { authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(this.config.timeoutMs),
+        });
+        if (response.status === 401) {
+            try {
+                token = await this.auth.refresh();
+            }
+            catch (error) {
+                this.auth.invalidate();
+                throw new VworkError(`phiên đăng nhập hết hạn: ${error.message}`, 401);
+            }
+            response = await this.fetchImpl(url, {
+                method: "GET",
+                headers: { authorization: `Bearer ${token}` },
+                signal: AbortSignal.timeout(this.config.timeoutMs),
+            });
+        }
+        if (!response.ok) {
+            throw new VworkError(`tải file thất bại (HTTP ${response.status})`, response.status);
+        }
+        const bytes = Buffer.from(await response.arrayBuffer());
+        return {
+            bytes,
+            contentType: response.headers.get("content-type"),
+            filename: response.headers.get("content-disposition"),
+        };
+    }
     clearCache() {
         this.cache.clear();
     }

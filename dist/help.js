@@ -57,5 +57,6 @@ TOOL
   vwork_me · vwork_my_tasks · vwork_project_overview · vwork_tracker_docs
   vwork_tracker_search · vwork_tracker_summary · vwork_tickets
   vwork_ticket · vwork_notifications · vwork_update_task · vwork_api
+  vwork_file_departments · vwork_dept_files · vwork_dept_tree · vwork_file_download
 `;
 export const VERSION = "0.1.0";

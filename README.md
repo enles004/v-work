@@ -143,12 +143,18 @@ npm run inspect
 | `vwork_ticket` | chi tiết ticket |
 | `vwork_notifications` | thông báo chưa đọc + mới nhất |
 | `vwork_update_task` | cập nhật status/note của task (cần `VWORK_ALLOW_WRITE=true`) |
+| `vwork_file_departments` | phòng ban có ổ file nội bộ (Tài liệu phòng ban) |
+| `vwork_dept_files` | thư mục + file trong một phòng ban, tìm theo tên |
+| `vwork_dept_tree` | cây thư mục đầy đủ của phòng ban |
+| `vwork_file_download` | tải file về `~/Downloads/vwork` (giới hạn 50MB) |
 | `vwork_api` | gọi API bất kỳ trong allowlist (GET luôn được; ghi phải bật) |
 
 Câu hỏi mẫu:
 
 - "Tuần này tôi có task nào quá hạn?"
 - "Tổng hợp tiến độ dự án eoffice, ai đang nhiều việc nhất?"
+- "Tài liệu phòng ban Công Nghệ có gì mới?"
+- "Tải file báo cáo tuần mới nhất về máy"
 - "Ticket nào đang mở cho khách hàng X?"
 - "Có thông báo chưa đọc nào không?"
 

@@ -1,9 +1,12 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { z } from "zod";
 import { AuthError } from "../auth.js";
 import { VworkError } from "../client.js";
 import { unwrap } from "../format.js";
 import { assertAllowedPath } from "./api.js";
 import { extractIdentity, filterMyTasks } from "./mine.js";
+import { buildFolderTree, defaultDownloadDir, filenameFromDisposition, filterByQuery, findDepartment, formatFile, formatFolder, sanitizeFileName, } from "./files.js";
 import { buildChanges, findDoc, hasChanges } from "./update.js";
 import { docCollection, docStatus, docTitle, extractDocs, formatDoc, isOverdue, searchDocs, summarizeDocs, } from "./tracker.js";
 const ok = (text) => ({ content: [{ type: "text", text }] });
@@ -165,6 +168,102 @@ export function registerTools(server, deps) {
         const unread = unwrap(await client.get("/notification/unread-count"));
         const body = await client.get("/notification", { limit });
         return ok(json({ unread, notifications: unwrap(body) }));
+    }));
+    server.registerTool("vwork_file_departments", {
+        description: "Liệt kê các phòng ban có ổ file nội bộ mà bạn được xem (Ổ file nội bộ > Tài liệu phòng ban). " +
+            "Trả về id, tên và mã phòng ban để dùng cho các tool file khác.",
+        inputSchema: z.object({
+            query: z.string().optional().describe("lọc theo tên hoặc mã phòng ban"),
+        }),
+    }, async ({ query }) => guard(async () => {
+        const body = await client.get("/internal-files/departments");
+        const departments = unwrap(body) ?? [];
+        const needle = query?.trim().toLowerCase();
+        const filtered = needle
+            ? departments.filter((dept) => dept.department_name?.toLowerCase().includes(needle) ||
+                dept.department_code?.toLowerCase().includes(needle))
+            : departments;
+        if (filtered.length === 0)
+            return ok("Không có phòng ban nào khớp.");
+        return ok(filtered
+            .map((dept) => `- ${dept.department_name ?? "?"} (${dept.department_code ?? "?"})\n  id=${dept._id ?? "?"}`)
+            .join("\n"));
+    }));
+    server.registerTool("vwork_dept_files", {
+        description: "Xem thư mục và file trong ổ file nội bộ của một phòng ban (Tài liệu phòng ban). " +
+            "Truyền `department` là id/tên/mã phòng ban; `folderId` để vào thư mục con; `query` để tìm theo tên file.",
+        inputSchema: z.object({
+            department: z.string().describe("id, mã (K-CN) hoặc tên phòng ban"),
+            folderId: z.string().optional().describe("id thư mục con (bỏ trống = thư mục gốc)"),
+            query: z.string().optional().describe("tìm theo tên file/thư mục"),
+            limit: z.number().int().min(1).max(300).default(50),
+        }),
+    }, async ({ department, folderId, query, limit }) => guard(async () => {
+        const deptBody = await client.get("/internal-files/departments");
+        const departments = unwrap(deptBody) ?? [];
+        const dept = findDepartment(departments, department);
+        if (!dept?._id) {
+            const names = departments.map((item) => item.department_name).join(", ");
+            return fail(`không tìm thấy phòng ban ${JSON.stringify(department)}. Có: ${names}`);
+        }
+        const foldersBody = await client.get(`/internal-files/${dept._id}/folders`, {
+            parent_id: folderId,
+        });
+        const filesBody = await client.get(`/internal-files/${dept._id}/files`, {
+            folder_id: folderId,
+        });
+        const folders = filterByQuery((unwrap(foldersBody) ?? []), query);
+        const files = filterByQuery((unwrap(filesBody) ?? []), query);
+        const lines = [
+            `📁 ${dept.department_name} (${dept.department_code ?? "?"}) · ${folders.length} thư mục · ${files.length} file`,
+            folderId ? `đang ở folder ${folderId}` : "đang ở thư mục gốc",
+        ];
+        const max = limit ?? 50;
+        const shownFolders = folders.slice(0, max);
+        const shownFiles = files.slice(0, Math.max(0, max - shownFolders.length));
+        if (shownFolders.length) {
+            lines.push("", ...shownFolders.map((folder) => formatFolder(folder)));
+        }
+        if (shownFiles.length) {
+            lines.push("", ...shownFiles.map((file) => formatFile(file)));
+        }
+        if (!shownFolders.length && !shownFiles.length) {
+            lines.push("", "Không có mục nào khớp.");
+        }
+        return ok(lines.join("\n"));
+    }));
+    server.registerTool("vwork_dept_tree", {
+        description: "In cây thư mục đầy đủ của ổ file nội bộ một phòng ban (Tài liệu phòng ban), kèm id để mở tiếp.",
+        inputSchema: z.object({ department: z.string().describe("id, mã hoặc tên phòng ban") }),
+    }, async ({ department }) => guard(async () => {
+        const deptBody = await client.get("/internal-files/departments");
+        const departments = unwrap(deptBody) ?? [];
+        const dept = findDepartment(departments, department);
+        if (!dept?._id)
+            return fail(`không tìm thấy phòng ban ${JSON.stringify(department)}`);
+        const folders = unwrap(await client.get(`/internal-files/${dept._id}/folders/all`)) ?? [];
+        return ok(`📁 ${dept.department_name}\n${buildFolderTree(folders)}`);
+    }));
+    server.registerTool("vwork_file_download", {
+        description: "Tải một file trong ổ file nội bộ về máy (mặc định ~/Downloads/vwork) và trả về đường dẫn. " +
+            "Dùng id file lấy từ vwork_dept_files. Giới hạn 50MB.",
+        inputSchema: z.object({
+            fileId: z.string().describe("id file (_id) trong danh sách file"),
+            saveDir: z.string().optional().describe("thư mục lưu, mặc định ~/Downloads/vwork"),
+        }),
+    }, async ({ fileId, saveDir }) => guard(async () => {
+        const result = await client.download(`/internal-files/file/${fileId}/view`);
+        const MAX = 50 * 1024 * 1024;
+        if (result.bytes.length > MAX) {
+            return fail(`file ${(result.bytes.length / 1024 / 1024).toFixed(1)}MB vượt giới hạn 50MB`);
+        }
+        const fromHeader = filenameFromDisposition(result.filename);
+        const name = sanitizeFileName(fromHeader ?? `${fileId}`);
+        const dir = saveDir ?? defaultDownloadDir();
+        await mkdir(dir, { recursive: true });
+        const fullPath = join(dir, name);
+        await writeFile(fullPath, result.bytes);
+        return ok(`✅ Đã tải ${name} (${(result.bytes.length / 1024).toFixed(0)}KB)\n${fullPath}`);
     }));
     server.registerTool("vwork_api", {
         description: "Gọi API VWork tuỳ ý (đã có sẵn auth). GET luôn được phép trong danh sách nhóm API; " +

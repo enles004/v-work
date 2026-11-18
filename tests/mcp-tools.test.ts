@@ -32,7 +32,7 @@ describe("đăng ký MCP tool", () => {
   const tools = capture();
 
   it("đủ 11 tool, tên duy nhất và có tiền tố vwork_", () => {
-    expect(tools).toHaveLength(11);
+    expect(tools).toHaveLength(15);
     const names = tools.map((tool) => tool.name);
     expect(new Set(names).size).toBe(names.length);
     for (const name of names) expect(name).toMatch(/^vwork_[a-z_]+$/);
@@ -58,6 +58,10 @@ describe("đăng ký MCP tool", () => {
         "vwork_update_task",
         "vwork_notifications",
         "vwork_api",
+        "vwork_file_departments",
+        "vwork_dept_files",
+        "vwork_dept_tree",
+        "vwork_file_download",
       ]),
     );
   });
