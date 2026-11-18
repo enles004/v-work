@@ -60,3 +60,10 @@ describe("auth --json", () => {
     expect(parseCommand(["auth", "whoami", "--json"])).toEqual({ kind: "whoami" });
   });
 });
+
+
+describe("doctor", () => {
+  it("là lệnh CLI hợp lệ", () => {
+    expect(parseCommand(["doctor"])).toEqual({ kind: "cli", name: "doctor" });
+  });
+});

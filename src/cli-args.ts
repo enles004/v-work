@@ -18,6 +18,7 @@ export const CLI_COMMANDS = new Set([
   "notifications",
   "update",
   "api",
+  "doctor",
 ]);
 
 export function parseCommand(argv: string[]): Command {

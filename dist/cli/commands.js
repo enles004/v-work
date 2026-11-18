@@ -37,6 +37,7 @@ const ALLOWED_FLAGS = {
     notifications: ["json", "help", "limit"],
     update: ["json", "help", "status", "note"],
     api: ["json", "help", "query", "body"],
+    doctor: ["json", "help"],
 };
 export async function runCli(argv) {
     const args = parseFlags(argv);
@@ -51,6 +52,48 @@ export async function runCli(argv) {
     const wantJson = flagBool(args.flags, "json");
     const { client, config } = await resolveClient();
     switch (args.command) {
+        case "doctor": {
+            const session = new AuthSession(config);
+            const tokens = await session.loadTokens();
+            const report = {
+                version: process.env.npm_package_version ?? "0.1.0",
+                node: process.version,
+                platform: `${process.platform}/${process.arch}`,
+                cwd: process.cwd(),
+                baseUrl: config.baseUrl,
+                project: config.project,
+                allowWrite: config.allowWrite,
+                tokenFile: config.tokenFile,
+                loggedIn: Boolean(tokens),
+            };
+            if (tokens) {
+                try {
+                    const me = extractIdentity(await client.get("/user/getUserInfo"));
+                    report.account = me.name ?? me.username;
+                    report.api = "ok";
+                }
+                catch (error) {
+                    report.api = `lỗi: ${error.message}`;
+                }
+            }
+            else {
+                report.hint = "chạy `vwork auth` để đăng nhập";
+            }
+            if (wantJson) {
+                process.stdout.write(`${json(report)}\n`);
+                return;
+            }
+            console.log(`v-work ${report.version} · Node ${report.node} · ${report.platform}`);
+            console.log(`Base     : ${report.baseUrl} (project ${report.project}, write=${report.allowWrite})`);
+            console.log(`Token    : ${report.tokenFile} (${report.loggedIn ? "có" : "chưa có"})`);
+            if (report.account)
+                console.log(`Tài khoản: ${report.account}`);
+            if (report.api)
+                console.log(`API      : ${report.api}`);
+            if (report.hint)
+                console.log(`Gợi ý     : ${report.hint}`);
+            return;
+        }
         case "me": {
             const [profile, permissions] = await Promise.all([
                 client.get("/user/getUserInfo"),
