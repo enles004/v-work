@@ -1,222 +1,210 @@
-# v-work
+<a id="readme-top"></a>
 
-MCP server (Node.js + TypeScript) cho **VNFITE Work** — cho phép AI đọc tiến độ dự án,
-ticket, thông báo và gọi các API khác của vWork bằng tài khoản của bạn.
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
 
-Chạy local qua **stdio**, không mở port, không gửi dữ liệu đi đâu ngoài `vWork.vnfite.com.vn`.
+<br />
+<div align="center">
+<h3 align="center">v-work</h3>
 
-## Vì sao bọc API thay vì crawl HTML
+  <p align="center">
+    MCP server cho VNFITE Work — để AI đọc tiến độ dự án, ticket, thông báo và tài liệu nội bộ bằng tài khoản của bạn.
+    <br />
+    <a href="https://github.com/enles004/v-work"><strong>Xem mã nguồn »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/enles004/v-work/issues/new?labels=bug">Báo lỗi</a>
+    &middot;
+    <a href="https://github.com/enles004/v-work/issues/new?labels=enhancement">Đề xuất tính năng</a>
+  </p>
+</div>
 
-Trang `/workplace/tien-do-du-an` là SPA React (Vite). Dữ liệu đi qua REST API:
+<details>
+  <summary>Mục lục</summary>
+  <ol>
+    <li>
+      <a href="#giới-thiệu">Giới thiệu</a>
+      <ul>
+        <li><a href="#công-nghệ">Công nghệ</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#bắt-đầu">Bắt đầu</a>
+      <ul>
+        <li><a href="#yêu-cầu">Yêu cầu</a></li>
+        <li><a href="#cài-đặt">Cài đặt</a></li>
+      </ul>
+    </li>
+    <li><a href="#sử-dụng">Sử dụng</a></li>
+    <li><a href="#đóng-góp">Đóng góp</a></li>
+    <li><a href="#giấy-phép">Giấy phép</a></li>
+    <li><a href="#liên-hệ">Liên hệ</a></li>
+  </ol>
+</details>
 
-```
-Base:  https://vWork.vnfite.com.vn
-Auth:  POST /auth/login {username,password} → accessToken + refreshToken (xoay vòng)
-Data:  GET  /project-tracker/eoffice/docs
-       GET  /project-tracker/eoffice/me
-       PATCH /project-tracker/eoffice/docs/{collection}/{docId}
-       POST /project-tracker/eoffice/import
-```
+## Giới thiệu
 
-Bản đồ đầy đủ: **157 endpoint / 10 nhóm** (project-tracker, tickets, notification, customer,
-customer-care, customer-call, user/department, workplace files, permissions, ai-assistant).
-Tool `vwork_api` phủ các endpoint còn lại mà không cần viết từng tool.
+**v-work** là một MCP (Model Context Protocol) server cho **VNFITE Work**. Nó cho phép các trợ lý AI như Claude đọc dữ liệu vWork và trả lời những câu hỏi như:
 
-## Cài đặt
+- "Tuần này tôi có task nào quá hạn?"
+- "Tổng hợp tiến độ dự án, ai đang nhiều việc nhất?"
+- "Tài liệu phòng ban Công Nghệ có gì mới?"
+- "Ticket nào đang mở cho khách hàng X?"
 
-### Cài global — gõ `vwork` trực tiếp (không cần npx)
+Tính năng chính:
 
-```bash
+- Tiến độ dự án: task của bạn, tìm kiếm, tổng hợp, quá hạn / sắp đến hạn.
+- Ticket hỗ trợ và thông báo chưa đọc.
+- Ổ file nội bộ: duyệt phòng ban, thư mục và tải file về máy.
+- Gọi được các API còn lại của vWork qua một tool chung.
+- Mặc định **chỉ đọc**; muốn ghi phải bật rõ ràng.
+
+Chạy local qua stdio, không mở port, không gửi dữ liệu đi đâu ngoài `vWork.vnfite.com.vn`.
+
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
+
+### Công nghệ
+
+* [![Node.js][Node.js]][Node-url]
+* [![TypeScript][TypeScript]][TypeScript-url]
+* [![MCP][MCP]][MCP-url]
+
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
+
+## Bắt đầu
+
+### Yêu cầu
+
+* Node.js 20 trở lên, kèm npm
+* Tài khoản VNFITE Work
+
+### Cài đặt
+
+Không cần clone hay build thủ công.
+
+1. Đăng nhập một lần (hỏi username / password, password được ẩn)
+   ```sh
+   npx -y github:enles004/v-work auth
+   ```
+2. Thêm vào MCP client (Claude Desktop, Cursor, VS Code…)
+   ```json
+   {
+     "mcpServers": {
+       "vwork": {
+         "command": "npx",
+         "args": ["-y", "github:enles004/v-work"]
+       }
+     }
+   }
+   ```
+   Với Claude Code:
+   ```sh
+   claude mcp add vwork -- npx -y github:enles004/v-work
+   ```
+3. Kết nối lại MCP (gõ `/mcp` trong Claude) để thấy danh sách tool.
+
+Nếu muốn gõ `vwork` trực tiếp, cài global:
+
+```sh
 npm i -g https://github.com/enles004/v-work/archive/refs/heads/master.tar.gz
 vwork auth
-vwork tasks --mine
 ```
 
-Cài xong có cả hai lệnh: `vwork` và `v-work`. Cập nhật phiên bản mới: chạy lại
-lệnh `npm i -g` ở trên. (npx chỉ chạy tạm, không tạo lệnh cố định.)
+Khi đó cấu hình MCP là `{ "command": "vwork" }`.
 
-Config MCP client có thể dùng binary global:
+Token lưu `chmod 600` tại `~/.config/vwork-mcp/tokens.json` (Linux), `~/Library/Application Support/vwork-mcp/tokens.json` (macOS) hoặc `%APPDATA%\vwork-mcp\tokens.json` (Windows), tự làm mới khi hết hạn.
 
-```json
-{ "mcpServers": { "vwork": { "command": "vwork" } } }
-```
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
 
-### Qua npx (sau khi publish)
+## Sử dụng
 
-```bash
-npx -y v-work auth      # đăng nhập một lần
-npx -y v-work auth status
-```
-
-Config MCP client:
-
-```json
-{
-  "mcpServers": {
-    "vwork": {
-      "command": "npx",
-      "args": ["-y", "v-work"]
-    }
-  }
-}
-```
-
-Nếu chưa publish lên npm, có thể chạy trực tiếp từ GitHub:
-
-```bash
-npx -y github:enles004/v-work auth
-```
-
-### Từ source
-
-```bash
-npm install
-npm run build
-
-node dist/cli.js auth      # hỏi username/password một lần
-node dist/cli.js auth status
-```
-
-**Không cần file `.env`.** Mặc định đã có sẵn:
-
-- base URL: `https://vWork.vnfite.com.vn` (prod)
-- project: `eoffice`
-- chỉ đọc, cache 30s, timeout 20s
-
-Chỉ khi cần đổi mặc định (ví dụ UAT) mới dùng biến môi trường `VWORK_BASE_URL`,
-`VWORK_PROJECT`, `VWORK_ALLOW_WRITE` trong config của MCP client.
-
-`login` hỏi username/password (password ẩn), lưu token vào
-`~/.config/v-work/tokens.json` (chmod 600). Server dùng token này và tự refresh;
-khi hết hạn hoàn toàn thì chạy `login` lại.
-
-Cách khác (không khuyến nghị): đặt `VWORK_USERNAME`/`VWORK_PASSWORD` trong env của
-MCP client — server tự đăng nhập. Password sẽ nằm trong config client.
-
-`npm run auth:check` vẫn dùng để xem tài khoản + cấu trúc doc thật.
-
-## Cấu hình client
-
-**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`
-hoặc `%APPDATA%\Claude\claude_desktop_config.json`):
-
-```json
-{
-  "mcpServers": {
-    "vwork": {
-      "command": "node",
-      "args": ["/home/faris/code/My_Workspace/v-work/dist/cli.js"]
-    }
-  }
-}
-```
-
-**Cursor / VS Code** (`.cursor/mcp.json` hoặc `.vscode/mcp.json`): cùng cấu trúc trên.
-
-**Claude Code**:
-
-```bash
-claude mcp add vwork -- node /home/faris/code/My_Workspace/v-work/dist/cli.js
-/mcp     # xem server đã kết nối + danh sách tool
-```
-
-Lưu ý: `/mcp` trong Claude và `opencode mcp auth` chỉ có flow OAuth cho server **remote
-HTTP**. Server stdio (như server này) không có flow đó — auth nằm ở CLI `login` + token file.
-
-Debug bằng MCP Inspector:
-
-```bash
-npm run inspect
-```
-
-## Tools
+### Tool cho AI
 
 | Tool | Việc |
 |---|---|
 | `vwork_me` | tài khoản + quyền hiện tại |
-| `vwork_my_tasks` | **task được giao cho chính bạn** (tự resolve danh tính) |
-| `vwork_project_overview` | ảnh chụp nhanh: tài khoản, tổng hợp tiến độ, ticket, thông báo chưa đọc |
+| `vwork_my_tasks` | task được giao cho chính bạn |
+| `vwork_project_overview` | ảnh chụp nhanh: tiến độ, ticket, thông báo chưa đọc |
 | `vwork_tracker_docs` | danh sách doc trong bảng tiến độ |
-| `vwork_tracker_search` | tìm theo từ khoá / trạng thái / người phụ trách / collection / quá hạn |
-| `vwork_tracker_summary` | đếm theo collection, trạng thái, người phụ trách, quá hạn, sắp đến hạn |
-| `vwork_tickets` | danh sách ticket hỗ trợ |
-| `vwork_ticket` | chi tiết ticket |
+| `vwork_tracker_search` | tìm theo từ khoá / trạng thái / người phụ trách / quá hạn |
+| `vwork_tracker_summary` | đếm theo trạng thái, người phụ trách, quá hạn, sắp đến hạn |
+| `vwork_tickets`, `vwork_ticket` | danh sách và chi tiết ticket |
 | `vwork_notifications` | thông báo chưa đọc + mới nhất |
-| `vwork_update_task` | cập nhật status/note của task (cần `VWORK_ALLOW_WRITE=true`) |
-| `vwork_file_departments` | phòng ban có ổ file nội bộ (Tài liệu phòng ban) |
-| `vwork_dept_files` | thư mục + file trong một phòng ban, tìm theo tên |
-| `vwork_dept_tree` | cây thư mục đầy đủ của phòng ban |
-| `vwork_file_download` | tải file về `~/Downloads/vwork` (giới hạn 50MB) |
-| `vwork_api` | gọi API bất kỳ trong allowlist (GET luôn được; ghi phải bật) |
+| `vwork_update_task` | cập nhật status / note của task (cần bật ghi) |
+| `vwork_file_departments`, `vwork_dept_files`, `vwork_dept_tree` | ổ file nội bộ theo phòng ban |
+| `vwork_file_download` | tải file về `~/Downloads/vwork` (tối đa 50MB) |
+| `vwork_api` | gọi API bất kỳ trong allowlist |
 
-Câu hỏi mẫu:
+### Dòng lệnh
 
-- "Tuần này tôi có task nào quá hạn?"
-- "Tổng hợp tiến độ dự án eoffice, ai đang nhiều việc nhất?"
-- "Tài liệu phòng ban Công Nghệ có gì mới?"
-- "Tải file báo cáo tuần mới nhất về máy"
-- "Ticket nào đang mở cho khách hàng X?"
-- "Có thông báo chưa đọc nào không?"
+Cùng một chương trình dùng được như CLI (`vwork` hoặc `npx -y github:enles004/v-work`):
 
-## Cập nhật
-
-```bash
-vwork upgrade        # git pull + npm install + build (hoặc npm i -g nếu bản global)
+```sh
+vwork auth status              # kiểm tra đăng nhập
+vwork tasks --mine --todo      # task của tôi chưa xong
+vwork tasks --overdue          # task quá hạn
+vwork summary                  # tổng hợp tiến độ
+vwork tickets --limit 10       # ticket
+vwork notifications            # thông báo
+vwork api GET /tickets --query "status=open,limit=3"
 ```
 
-Sau đó **reconnect MCP** trong Claude (`/mcp`) là dùng bản mới. Không cần xoá cache, không cần sửa config.
+Thêm `--json` để in JSON thô, `vwork <lệnh> --help` để xem chi tiết.
 
-`dist/` không commit lên git; script `prepare` tự build khi cài từ GitHub (`npx github:...`, `npm i -g <tarball>`).
+### Cấu hình và quyền ghi
 
-## Nền tảng
+Mặc định đã dùng được ngay (prod, project `eoffice`, chỉ đọc). Chỉ khi cần đổi mới đặt biến môi trường trong cấu hình MCP client:
 
-Chạy trên Linux, macOS, Windows (Node ≥ 20). Token lưu theo chuẩn từng OS:
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `VWORK_BASE_URL` | `https://vWork.vnfite.com.vn` | địa chỉ API |
+| `VWORK_PROJECT` | `eoffice` | project |
+| `VWORK_ALLOW_WRITE` | `false` | `true` để cho phép sửa task / gọi API ghi |
 
-| OS | Đường dẫn |
-|---|---|
-| Linux | `~/.config/vwork-mcp/tokens.json` |
-| macOS | `~/Library/Application Support/vwork-mcp/tokens.json` |
-| Windows | `%APPDATA%\vwork-mcp\tokens.json` |
+Quyền ghi chỉ mở cho `/project-tracker`, `/tickets`, `/notification`; `/auth/*` và `/permissions/*` luôn bị chặn.
 
-CI GitHub Actions chạy test + typecheck trên cả 3 OS với Node 20 và 22.
+### Cập nhật
 
-## An toàn
+Chạy `vwork upgrade` (bản global) hoặc `npx -y --prefer-online github:enles004/v-work`, rồi kết nối lại MCP.
 
-- Mặc định **chỉ đọc**: `VWORK_ALLOW_WRITE=false`. Bật `true` mới cho PATCH/POST/PUT/DELETE.
-- Ghi chỉ mở cho `/project-tracker`, `/tickets`, `/notification`; `/auth/*` và `/permissions/*` luôn bị chặn.
-- Token lưu tại `~/.config/v-work/tokens.json` (chmod 600), tự refresh và xoay vòng.
-- Password chỉ nằm trong env của MCP client — không commit, không log.
-- Cache GET 30s để tránh spam API khi AI hỏi liên tiếp.
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
 
-## Phát triển
+## Đóng góp
 
-```bash
-npm test        # mock toàn bộ HTTP, không gọi mạng
-npm run build
-npm run dev     # tsx, dùng khi debug
-```
+Mọi đóng góp đều được hoan nghênh.
 
-CLI:
+1. Fork dự án
+2. Tạo nhánh tính năng (`git checkout -b feature/TenTinhNang`)
+3. Commit thay đổi (`git commit -m 'Thêm TenTinhNang'`)
+4. Push lên nhánh (`git push origin feature/TenTinhNang`)
+5. Mở Pull Request
 
-```bash
-node dist/cli.js            # chạy server (mặc định)
-node dist/cli.js login      # đăng nhập, lưu token
-node dist/cli.js status     # kiểm tra token
-node dist/cli.js whoami     # in tài khoản hiện tại
-node dist/cli.js logout     # xoá token
-```
+Chạy `npm install` rồi `npm test` (mock toàn bộ HTTP, không gọi mạng) trước khi gửi.
 
-Cấu trúc:
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
 
-```
-src/
-  config.ts        # env → Config (zod)
-  auth.ts          # login / refresh / token store
-  client.ts        # HTTP client: auth, retry 401, cache, timeout
-  format.ts        # helper đọc JSON không phụ thuộc schema
-  tools/
-    api.ts         # allowlist cho tool generic
-    tracker.ts     # search / summarize / format doc
-    register.ts    # đăng ký 11 tool
-  server.ts        # entrypoint stdio
-```
+## Giấy phép
+
+Phát hành theo giấy phép MIT. Xem `LICENSE` để biết thêm.
+
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
+
+## Liên hệ
+
+Project: [https://github.com/enles004/v-work](https://github.com/enles004/v-work)
+
+<p align="right">(<a href="#readme-top">về đầu trang</a>)</p>
+
+[stars-shield]: https://img.shields.io/github/stars/enles004/v-work.svg?style=for-the-badge
+[stars-url]: https://github.com/enles004/v-work/stargazers
+[issues-shield]: https://img.shields.io/github/issues/enles004/v-work.svg?style=for-the-badge
+[issues-url]: https://github.com/enles004/v-work/issues
+[license-shield]: https://img.shields.io/github/license/enles004/v-work.svg?style=for-the-badge
+[license-url]: https://github.com/enles004/v-work/blob/master/LICENSE
+[Node.js]: https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white
+[Node-url]: https://nodejs.org/
+[TypeScript]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[MCP]: https://img.shields.io/badge/MCP-000000?style=for-the-badge&logo=modelcontextprotocol&logoColor=white
+[MCP-url]: https://modelcontextprotocol.io/
