@@ -166,7 +166,7 @@ vwork upgrade        # git pull + npm install + build (hoặc npm i -g nếu b�
 
 Sau đó **reconnect MCP** trong Claude (`/mcp`) là dùng bản mới. Không cần xoá cache, không cần sửa config.
 
-Repo có pre-commit hook tự build + stage `dist/`, và CI kiểm tra `dist` đồng bộ với `src` (bật hook: `git config core.hooksPath .githooks`).
+`dist/` không commit lên git; script `prepare` tự build khi cài từ GitHub (`npx github:...`, `npm i -g <tarball>`).
 
 ## Nền tảng
 
